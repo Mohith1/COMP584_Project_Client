@@ -1,0 +1,102 @@
+<app-page-header
+  title="Fleet management"
+  subtitle="Create fleets, manage vehicles, and review telemetry."
+  primaryLabel="New fleet"
+  (primary)="clearSelection()"
+></app-page-header>
+
+<section class="fleets-layout">
+  <div class="fleets-panel">
+    <app-fleet-list
+      [fleets]="fleets()"
+      [selectedFleetId]="selectedFleet?.id || null"
+      (create)="clearSelection()"
+      (select)="selectFleet($event)"
+      (edit)="selectFleet($event)"
+      (remove)="deleteFleet($event)"
+    ></app-fleet-list>
+    <mat-paginator
+      [length]="totalFleets"
+      [pageIndex]="pageIndex"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[5, 10, 25]"
+      (page)="handlePage($event)"
+    ></mat-paginator>
+  </div>
+
+  <div class="fleet-detail">
+    <mat-card>
+      <mat-card-title>
+        {{ selectedFleet ? 'Update fleet' : 'Create new fleet' }}
+      </mat-card-title>
+      <form [formGroup]="fleetForm" (ngSubmit)="saveFleet()">
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Description</mat-label>
+          <textarea matInput rows="3" formControlName="description"></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="Active">Active</mat-option>
+            <mat-option value="Inactive">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit">
+          {{ selectedFleet ? 'Save changes' : 'Create fleet' }}
+        </button>
+      </form>
+    </mat-card>
+
+    <mat-card *ngIf="selectedFleet">
+      <mat-card-title>Add vehicle</mat-card-title>
+      <form [formGroup]="vehicleForm" (ngSubmit)="submitVehicle()">
+        <div class="vehicle-form">
+          <mat-form-field appearance="outline">
+            <mat-label>VIN</mat-label>
+            <input matInput formControlName="vin" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Make</mat-label>
+            <input matInput formControlName="make" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Model</mat-label>
+            <input matInput formControlName="model" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Year</mat-label>
+            <input matInput type="number" formControlName="year" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="Active">Active</mat-option>
+              <mat-option value="Inactive">Inactive</mat-option>
+              <mat-option value="Maintenance">Maintenance</mat-option>
+              <mat-option value="Decommissioned">Decommissioned</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <button mat-stroked-button color="primary" type="submit">
+          Add vehicle
+        </button>
+      </form>
+    </mat-card>
+
+    <app-vehicle-table
+      [vehicles]="vehicles()"
+      [showActions]="!!selectedFleet"
+      (addVehicle)="submitVehicle()"
+      (deleteVehicle)="handleVehicleDelete($event)"
+      (statusChange)="handleVehicleStatusChange($event)"
+    ></app-vehicle-table>
+  </div>
+</section>
+

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "fleet-1",
+    "name": "Metro Delivery",
+    "description": "Urban delivery vans for downtown routes.",
+    "vehicleCount": 12,
+    "status": "Active"
+  },
+  {
+    "id": "fleet-2",
+    "name": "Long Haul",
+    "description": "Sleeper trucks for long-haul routes.",
+    "vehicleCount": 8,
+    "status": "Active"
+  }
+]
+

@@ -1,0 +1,38 @@
+.vehicle-table {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+
+    h3 {
+      margin: 0;
+    }
+
+    p {
+      margin: 0.25rem 0 0;
+      color: #475569;
+    }
+  }
+}
+
+.full-width-table {
+  width: 100%;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+tr.inactive {
+  background-color: rgba(148, 163, 184, 0.1);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #475569;
+}
+

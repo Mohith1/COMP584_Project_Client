@@ -1,0 +1,21 @@
+<app-page-header
+  title="Your Okta profile"
+  subtitle="Claims returned from the Okta userinfo endpoint."
+  [showPrimary]="false"
+></app-page-header>
+
+<mat-card *ngIf="profile(); else loading">
+  <h3>{{ profile()?.name }}</h3>
+  <p>{{ profile()?.email }}</p>
+  <p>Owner ID: {{ profile()?.ownerId || 'n/a' }}</p>
+  <div class="chips">
+    <mat-chip-listbox>
+      <mat-chip *ngFor="let role of profile()?.roles">{{ role }}</mat-chip>
+    </mat-chip-listbox>
+  </div>
+</mat-card>
+
+<ng-template #loading>
+  <mat-card>Loading profile…</mat-card>
+</ng-template>
+

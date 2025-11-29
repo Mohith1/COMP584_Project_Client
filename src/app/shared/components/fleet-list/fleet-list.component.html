@@ -1,0 +1,59 @@
+<section class="fleet-list">
+  <header class="fleet-list__header">
+    <div>
+      <h3>Fleets</h3>
+      <p>Manage each fleet and its assigned vehicles.</p>
+    </div>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="create.emit()"
+      *ngIf="showActions"
+      data-testid="create-fleet"
+    >
+      <mat-icon>add</mat-icon>
+      New fleet
+    </button>
+  </header>
+
+  <div class="fleet-cards" *ngIf="fleets.length; else emptyState">
+    <mat-card
+      *ngFor="let fleet of fleets; trackBy: trackById"
+      [ngClass]="{ selected: fleet.id === selectedFleetId }"
+    >
+      <mat-card-header>
+        <mat-card-title>{{ fleet.name }}</mat-card-title>
+        <mat-card-subtitle>
+          {{ fleet.vehicleCount }} vehicles • {{ fleet.status }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{ fleet.description || 'No description provided.' }}</p>
+      </mat-card-content>
+      <mat-card-actions *ngIf="showActions">
+        <button mat-button (click)="select.emit(fleet)">View</button>
+        <button mat-button color="primary" (click)="edit.emit(fleet)">
+          Edit
+        </button>
+        <button mat-button color="warn" (click)="remove.emit(fleet)">
+          Delete
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="empty-state">
+      <p>No fleets found for this owner.</p>
+      <button
+        mat-stroked-button
+        color="primary"
+        (click)="create.emit()"
+        *ngIf="showActions"
+      >
+        Create your first fleet
+      </button>
+    </div>
+  </ng-template>
+</section>
+

@@ -1,0 +1,21 @@
+[
+  {
+    "id": "veh-1",
+    "fleetId": "fleet-1",
+    "vin": "3N1AB7AP5EY123456",
+    "make": "Ford",
+    "model": "Transit",
+    "year": 2023,
+    "status": "Active"
+  },
+  {
+    "id": "veh-2",
+    "fleetId": "fleet-1",
+    "vin": "1FTBR1C89PKA12345",
+    "make": "Mercedes",
+    "model": "Sprinter",
+    "year": 2022,
+    "status": "Maintenance"
+  }
+]
+

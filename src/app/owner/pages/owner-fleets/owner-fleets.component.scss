@@ -1,0 +1,22 @@
+.fleets-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1.5rem;
+}
+
+.fleet-detail mat-card {
+  margin-bottom: 1rem;
+}
+
+.vehicle-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .fleets-layout {
+    grid-template-columns: 1fr;
+  }
+}
+

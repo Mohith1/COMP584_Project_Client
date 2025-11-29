@@ -1,0 +1,26 @@
+[
+  {
+    "vehicleId": "veh-1",
+    "vehicleName": "Transit 23",
+    "speed": 63,
+    "fuelLevel": 54,
+    "batteryHealth": 98,
+    "latitude": 34.06,
+    "longitude": -118.25,
+    "status": "Normal",
+    "recordedOn": "2025-11-29T01:00:00Z"
+  },
+  {
+    "vehicleId": "veh-2",
+    "vehicleName": "Sprinter 18",
+    "speed": 12,
+    "fuelLevel": 12,
+    "batteryHealth": 74,
+    "latitude": 34.12,
+    "longitude": -118.32,
+    "status": "Critical",
+    "alert": "Fuel below 15%",
+    "recordedOn": "2025-11-29T01:05:00Z"
+  }
+]
+

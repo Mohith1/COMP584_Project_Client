@@ -1,0 +1,25 @@
+<div class="page-header">
+  <button
+    mat-icon-button
+    class="page-header__back"
+    *ngIf="showBack"
+    aria-label="Go back"
+    (click)="back.emit()"
+  >
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <div class="page-header__content">
+    <h2>{{ title }}</h2>
+    <p *ngIf="subtitle">{{ subtitle }}</p>
+  </div>
+  <span class="spacer"></span>
+  <button
+    mat-raised-button
+    color="primary"
+    *ngIf="showPrimary"
+    (click)="primary.emit()"
+  >
+    {{ primaryLabel }}
+  </button>
+</div>
+

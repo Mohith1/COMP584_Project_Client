@@ -1,0 +1,25 @@
+<section class="auth-card">
+  <mat-card>
+    <mat-card-title>Owner sign in</mat-card-title>
+    <form [formGroup]="loginForm" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" type="email" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password" />
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit">
+        Sign in
+      </button>
+    </form>
+    <p>
+      Need an account?
+      <a routerLink="/owner/register">Register an owner</a>
+    </p>
+  </mat-card>
+</section>
+

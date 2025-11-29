@@ -1,0 +1,25 @@
+.owner-shell {
+  height: 100vh;
+}
+
+mat-sidenav {
+  width: 220px;
+  padding: 1rem;
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+}
+
+.owner-shell__content {
+  padding: 1.5rem;
+}
+
+a.active {
+  background-color: rgba(37, 99, 235, 0.1);
+}
+

@@ -1,0 +1,20 @@
+<app-page-header
+  title="Owner dashboard"
+  subtitle="Monitor fleets and telemetry snapshots."
+  [showPrimary]="false"
+></app-page-header>
+
+<section class="stats">
+  <mat-card>
+    <h4>Fleets</h4>
+    <p class="metric">{{ fleets().length }}</p>
+  </mat-card>
+  <mat-card>
+    <h4>Latest snapshots</h4>
+    <p class="metric">{{ telemetry().length }}</p>
+  </mat-card>
+</section>
+
+<app-telemetry-highlights [telemetry]="telemetry()"></app-telemetry-highlights>
+<app-telemetry-chart [telemetry]="telemetry()"></app-telemetry-chart>
+

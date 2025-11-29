@@ -1,0 +1,29 @@
+<mat-sidenav-container class="owner-shell">
+  <mat-sidenav mode="side" opened>
+    <div class="brand">
+      <mat-icon>directions_car</mat-icon>
+      <span>Owner Portal</span>
+    </div>
+    <mat-nav-list>
+      <a
+        mat-list-item
+        *ngFor="let item of navItems"
+        [routerLink]="item.link"
+        routerLinkActive="active"
+      >
+        <mat-icon matListIcon>{{ item.icon }}</mat-icon>
+        <span matLine>{{ item.label }}</span>
+      </a>
+    </mat-nav-list>
+    <button mat-button color="warn" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <main class="owner-shell__content">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+

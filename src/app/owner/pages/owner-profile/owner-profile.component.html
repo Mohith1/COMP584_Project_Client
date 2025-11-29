@@ -1,0 +1,36 @@
+<app-page-header
+  title="Profile"
+  subtitle="Update your contact and company details."
+  [showPrimary]="false"
+></app-page-header>
+
+<mat-card>
+  <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+    <div class="profile-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>First name</mat-label>
+        <input matInput formControlName="firstName" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Last name</mat-label>
+        <input matInput formControlName="lastName" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Company</mat-label>
+        <input matInput formControlName="companyName" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Phone</mat-label>
+        <input matInput formControlName="phoneNumber" />
+      </mat-form-field>
+    </div>
+    <button mat-raised-button color="primary" type="submit">
+      Save profile
+    </button>
+  </form>
+</mat-card>
+

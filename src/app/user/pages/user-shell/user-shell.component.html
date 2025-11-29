@@ -1,0 +1,29 @@
+<mat-sidenav-container class="user-shell">
+  <mat-sidenav mode="side" opened>
+    <div class="brand">
+      <mat-icon>precision_manufacturing</mat-icon>
+      <span>User Portal</span>
+    </div>
+    <mat-nav-list>
+      <a
+        mat-list-item
+        *ngFor="let item of navItems"
+        [routerLink]="item.link"
+        routerLinkActive="active"
+      >
+        <mat-icon matListIcon>{{ item.icon }}</mat-icon>
+        <span matLine>{{ item.label }}</span>
+      </a>
+    </mat-nav-list>
+    <button mat-button (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      Sign out
+    </button>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <main class="user-shell__content">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+

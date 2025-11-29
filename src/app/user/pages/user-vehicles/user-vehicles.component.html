@@ -1,0 +1,36 @@
+<app-page-header
+  title="Fleet telemetry"
+  subtitle="Read-only feed powered by Okta bearer tokens."
+  [showPrimary]="false"
+></app-page-header>
+
+<app-telemetry-highlights [telemetry]="telemetry"></app-telemetry-highlights>
+
+<mat-card>
+  <mat-card-title>Latest readings</mat-card-title>
+  <table class="telemetry-table" *ngIf="telemetry.length; else empty">
+    <thead>
+      <tr>
+        <th>Vehicle</th>
+        <th>Speed</th>
+        <th>Fuel</th>
+        <th>Status</th>
+        <th>Recorded</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of telemetry">
+        <td>{{ item.vehicleName || item.vehicleId }}</td>
+        <td>{{ item.speed }} km/h</td>
+        <td>{{ item.fuelLevel }}%</td>
+        <td>{{ item.status }}</td>
+        <td>{{ item.recordedOn | date: 'short' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ng-template #empty>
+    <p class="muted">No telemetry yet.</p>
+  </ng-template>
+</mat-card>
+

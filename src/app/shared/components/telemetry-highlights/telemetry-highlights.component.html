@@ -1,0 +1,54 @@
+<section class="telemetry-highlights">
+  <mat-card class="highlight">
+    <h4>Active vehicles</h4>
+    <p class="metric">{{ totalVehicles }}</p>
+    <span class="muted">reporting in the last poll</span>
+  </mat-card>
+
+  <mat-card class="highlight warn">
+    <h4>Critical alerts</h4>
+    <p class="metric">{{ criticalAlerts }}</p>
+    <span class="muted">need attention</span>
+  </mat-card>
+
+  <mat-card class="highlight">
+    <h4>Avg. speed</h4>
+    <p class="metric">{{ averageSpeed }} km/h</p>
+    <span class="muted">across active vehicles</span>
+  </mat-card>
+
+  <mat-card class="highlight warn">
+    <h4>Low fuel</h4>
+    <p class="metric">{{ lowFuelCount }}</p>
+    <span class="muted">below 25%</span>
+  </mat-card>
+</section>
+
+<mat-card class="telemetry-table" *ngIf="highlightedRows.length">
+  <mat-card-title>Latest telemetry</mat-card-title>
+  <table>
+    <thead>
+      <tr>
+        <th>Vehicle</th>
+        <th>Speed</th>
+        <th>Fuel</th>
+        <th>Status</th>
+        <th>Recorded</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of highlightedRows">
+        <td>{{ row.vehicleName || row.vehicleId }}</td>
+        <td>{{ row.speed }} km/h</td>
+        <td>{{ row.fuelLevel }}%</td>
+        <td>
+          <span class="badge" [class.critical]="row.status === 'Critical'">{{
+            row.status
+          }}</span>
+        </td>
+        <td>{{ row.recordedOn | date: 'shortTime' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</mat-card>
+
