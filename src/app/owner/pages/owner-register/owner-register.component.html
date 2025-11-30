@@ -2,33 +2,86 @@
   <mat-card>
     <mat-card-title>Register an owner</mat-card-title>
     <form [formGroup]="registerForm" (ngSubmit)="submit()">
-      <div class="grid">
-        <mat-form-field appearance="outline">
-          <mat-label>First name</mat-label>
-          <input matInput formControlName="firstName" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Last name</mat-label>
-          <input matInput formControlName="lastName" />
-        </mat-form-field>
-      </div>
+      <mat-form-field appearance="outline">
+        <mat-label>Company name</mat-label>
+        <input matInput formControlName="companyName" maxlength="128" />
+        <mat-error *ngIf="registerForm.get('companyName')?.hasError('required')">
+          Company name is required
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Primary contact name</mat-label>
+        <input matInput formControlName="primaryContactName" maxlength="64" />
+        <mat-error *ngIf="registerForm.get('primaryContactName')?.hasError('required')">
+          Contact name is required
+        </mat-error>
+      </mat-form-field>
+
       <mat-form-field appearance="outline">
         <mat-label>Email</mat-label>
         <input matInput formControlName="email" type="email" />
+        <mat-error *ngIf="registerForm.get('email')?.hasError('required')">
+          Email is required
+        </mat-error>
+        <mat-error *ngIf="registerForm.get('email')?.hasError('email')">
+          Enter a valid email
+        </mat-error>
       </mat-form-field>
+
       <mat-form-field appearance="outline">
-        <mat-label>Password</mat-label>
+        <mat-label>Password (min 12 characters)</mat-label>
         <input matInput formControlName="password" type="password" />
+        <mat-error *ngIf="registerForm.get('password')?.hasError('required')">
+          Password is required
+        </mat-error>
+        <mat-error *ngIf="registerForm.get('password')?.hasError('minlength')">
+          Password must be at least 12 characters
+        </mat-error>
       </mat-form-field>
+
       <mat-form-field appearance="outline">
-        <mat-label>Company</mat-label>
-        <input matInput formControlName="companyName" />
+        <mat-label>Confirm password</mat-label>
+        <input matInput formControlName="confirmPassword" type="password" />
       </mat-form-field>
+
+      <mat-form-field appearance="outline" *ngIf="countries.length > 0">
+        <mat-label>Country (optional filter)</mat-label>
+        <mat-select formControlName="countryId" (selectionChange)="onCountryChange($event.value)">
+          <mat-option value="">All Countries</mat-option>
+          <mat-option *ngFor="let country of countries" [value]="country.id">
+            {{ country.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
       <mat-form-field appearance="outline">
-        <mat-label>Phone</mat-label>
-        <input matInput formControlName="phoneNumber" />
+        <mat-label>City</mat-label>
+        <mat-select formControlName="cityId">
+          <mat-option *ngIf="isLoadingCities" disabled>Loading cities...</mat-option>
+          <mat-option *ngIf="!isLoadingCities && cities.length === 0" disabled>
+            No cities available. Please contact administrator.
+          </mat-option>
+          <mat-option *ngFor="let city of cities" [value]="city.id">
+            {{ city.name }}<span *ngIf="city.countryName">, {{ city.countryName }}</span>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="registerForm.get('cityId')?.hasError('required')">
+          City is required
+        </mat-error>
       </mat-form-field>
-      <button mat-raised-button color="primary" type="submit">
+
+      <mat-form-field appearance="outline">
+        <mat-label>Phone (optional)</mat-label>
+        <input matInput formControlName="phoneNumber" type="tel" />
+      </mat-form-field>
+
+      <button
+        mat-raised-button
+        color="primary"
+        type="submit"
+        [disabled]="registerForm.invalid"
+      >
         Register
       </button>
     </form>
@@ -38,4 +91,3 @@
     </p>
   </mat-card>
 </section>
-

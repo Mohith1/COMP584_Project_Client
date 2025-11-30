@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, OnDestroy, computed, signal } from '@angular/core';
-import { tap, finalize, map, switchMap, of, timer, Subscription } from 'rxjs';
+import { Observable, Subscription, of, timer } from 'rxjs';
+import { tap, finalize, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   OwnerAuthResponse,
@@ -41,8 +42,8 @@ export class OwnerAuthService implements OnDestroy {
 
   register(payload: OwnerRegisterRequest) {
     return this.http
-      .post<OwnerProfile>(`${this.baseUrl}/api/auth/register-owner`, payload)
-      .pipe(tap((owner) => this.ownerState.setOwner(owner)));
+      .post<OwnerAuthResponse>(`${this.baseUrl}/api/auth/register-owner`, payload)
+      .pipe(tap((response) => this.handleAuthSuccess(response)));
   }
 
   login(credentials: OwnerLoginRequest) {
@@ -54,7 +55,7 @@ export class OwnerAuthService implements OnDestroy {
       );
   }
 
-  refresh() {
+  refresh(): Observable<OwnerAuthResponse | null> {
     const refreshToken = this.authState().refreshToken;
     if (!refreshToken) {
       return of(null);
@@ -103,7 +104,11 @@ export class OwnerAuthService implements OnDestroy {
   }
 
   private handleAuthSuccess(response: OwnerAuthResponse) {
-    const expiresAt = Date.now() + response.expiresIn * 1000;
+    // Calculate expiration from expiresAtUtc
+    const expiresAt = new Date(response.expiresAtUtc).getTime();
+    const expiresInMs = expiresAt - Date.now();
+    const expiresInSec = Math.floor(expiresInMs / 1000);
+
     this.authState.set({
       accessToken: response.accessToken,
       refreshToken: response.refreshToken,
@@ -115,7 +120,7 @@ export class OwnerAuthService implements OnDestroy {
       response.refreshToken
     );
     this.ownerState.setOwner(response.owner);
-    this.scheduleRefresh(response.expiresIn);
+    this.scheduleRefresh(expiresInSec);
     this.personaService.setPersona('owner');
   }
 

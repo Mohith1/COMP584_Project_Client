@@ -21,7 +21,7 @@
         <th mat-header-cell *matHeaderCellDef>VIN</th>
         <td mat-cell *matCellDef="let vehicle">
           <strong>{{ vehicle.vin }}</strong>
-          <div class="muted">{{ vehicle.year }} • {{ vehicle.model }}</div>
+          <div class="muted">{{ vehicle.modelYear || vehicle.year }} • {{ vehicle.model }}</div>
         </td>
       </ng-container>
 
@@ -35,17 +35,19 @@
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef>Status</th>
         <td mat-cell *matCellDef="let vehicle">
-          <mat-form-field appearance="outline" *ngIf="showActions">
+          <mat-form-field appearance="outline" *ngIf="showActions" class="status-select">
             <mat-select
               [value]="vehicle.status"
               (selectionChange)="onStatusChange(vehicle, $event.value)"
             >
               <mat-option *ngFor="let status of statuses" [value]="status">
-                {{ status }}
+                <span [class]="'status-badge status-' + status.toLowerCase()">{{ status }}</span>
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <span *ngIf="!showActions">{{ vehicle.status }}</span>
+          <span *ngIf="!showActions" [class]="'status-badge status-' + vehicle.status.toLowerCase()">
+            {{ vehicle.status }}
+          </span>
         </td>
       </ng-container>
 
@@ -63,13 +65,14 @@
       </ng-container>
 
       <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef *ngIf="showActions"></th>
-        <td mat-cell *matCellDef="let vehicle" *ngIf="showActions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let vehicle">
           <button
             mat-icon-button
             color="warn"
             (click)="deleteVehicle.emit(vehicle)"
             matTooltip="Remove vehicle"
+            *ngIf="showActions"
           >
             <mat-icon>delete</mat-icon>
           </button>
@@ -80,7 +83,7 @@
       <tr
         mat-row
         *matRowDef="let row; columns: columns"
-        [class.inactive]="row.status !== 'Active'"
+        [class.inactive]="row.status !== 'Available'"
       ></tr>
     </table>
   </div>

@@ -25,7 +25,12 @@ export class OwnerLoginComponent {
     if (this.loginForm.invalid) {
       return;
     }
-    this.ownerAuth.login(this.loginForm.value).subscribe(() => {
+    const formValue = this.loginForm.value;
+    const credentials = {
+      email: formValue.email ?? '',
+      password: formValue.password ?? ''
+    };
+    this.ownerAuth.login(credentials).subscribe(() => {
       this.router.navigate(['/owner/dashboard']);
     });
   }

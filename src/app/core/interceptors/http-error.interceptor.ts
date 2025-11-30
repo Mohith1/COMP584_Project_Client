@@ -20,10 +20,39 @@ export class HttpErrorInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<unknown>> {
     return next.handle(req).pipe(
       catchError((error: HttpErrorResponse) => {
-        this.presentError(error);
-        return throwError(() => error);
+        // Transform error to include additional context for component handling
+        const enhancedError = this.enhanceError(error);
+        this.presentError(enhancedError);
+        return throwError(() => enhancedError);
       })
     );
+  }
+
+  private enhanceError(error: HttpErrorResponse): HttpErrorResponse {
+    // Handle 409 Conflict (Duplicate VIN)
+    if (error.status === 409 && error.error?.errorCode === 'DUPLICATE_VIN') {
+      return {
+        ...error,
+        error: {
+          ...error.error,
+          field: 'vin',
+          status: 409
+        }
+      } as HttpErrorResponse;
+    }
+
+    // Handle 400 Bad Request (Validation Errors)
+    if (error.status === 400 && error.error?.errors) {
+      return {
+        ...error,
+        error: {
+          ...error.error,
+          fieldErrors: error.error.errors
+        }
+      } as HttpErrorResponse;
+    }
+
+    return error;
   }
 
   private presentError(error: HttpErrorResponse) {
@@ -38,13 +67,21 @@ export class HttpErrorInterceptor implements HttpInterceptor {
         this.toast.show('Unable to reach server. Check network connectivity.', 'warn');
         break;
       case 400:
-        this.toast.show(message || 'Validation error', 'warn');
+        // Don't show generic toast for validation errors - let forms handle it
+        // Only show if there's a general message
+        if (message && message !== 'Validation error') {
+          this.toast.show(message, 'warn');
+        }
         break;
       case 401:
         this.toast.show('Session expired. Please sign in again.', 'warn');
         break;
       case 403:
         this.toast.show('You do not have access to that resource.', 'warn');
+        break;
+      case 409:
+        // Duplicate VIN - show the specific error message
+        this.toast.show(message || 'A vehicle with this VIN already exists.', 'error');
         break;
       case 500:
         this.toast.show('Something went wrong on the server.', 'error');
@@ -54,4 +91,5 @@ export class HttpErrorInterceptor implements HttpInterceptor {
     }
   }
 }
+
 

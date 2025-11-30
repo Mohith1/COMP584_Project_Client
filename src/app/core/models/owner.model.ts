@@ -1,10 +1,12 @@
 export interface OwnerProfile {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
   companyName: string;
-  phoneNumber?: string;
-  createdOn?: string;
+  contactEmail: string;
+  contactPhone?: string;
+  city?: string;
+  country?: string;
+  timeZone?: string;
+  fleetCount?: number;
+  oktaGroupId?: string;
 }
 

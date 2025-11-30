@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { OwnerAuthService } from '../../../core/services/owner-auth.service';
+import { CityService, City, Country } from '../../../core/services/city.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-owner-register',
@@ -9,35 +11,87 @@ import { OwnerAuthService } from '../../../core/services/owner-auth.service';
   styleUrls: ['./owner-register.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class OwnerRegisterComponent {
+export class OwnerRegisterComponent implements OnInit {
+  countries: Country[] = [];
+  cities: City[] = [];
+  isLoadingCities = false;
+
   registerForm = this.fb.group({
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
+    companyName: ['', [Validators.required, Validators.maxLength(128)]],
+    primaryContactName: ['', [Validators.required, Validators.maxLength(64)]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required],
-    companyName: ['', Validators.required],
+    password: ['', [Validators.required, Validators.minLength(12)]],
+    confirmPassword: [''],
+    countryId: [''],
+    cityId: ['', Validators.required],
     phoneNumber: ['']
   });
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly ownerAuth: OwnerAuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly cityService: CityService,
+    private readonly toast: ToastService
   ) {}
+
+  ngOnInit(): void {
+    this.loadCountries();
+    this.loadAllCities();
+  }
+
+  loadCountries(): void {
+    this.cityService.getCountries().subscribe((countries) => {
+      this.countries = countries;
+    });
+  }
+
+  loadAllCities(): void {
+    this.isLoadingCities = true;
+    this.cityService.getCities().subscribe((cities) => {
+      this.cities = cities;
+      this.isLoadingCities = false;
+    });
+  }
+
+  onCountryChange(countryId: string): void {
+    if (countryId) {
+      this.isLoadingCities = true;
+      this.cityService.getCitiesByCountry(countryId).subscribe((cities) => {
+        this.cities = cities;
+        this.isLoadingCities = false;
+        // Reset city selection when country changes
+        this.registerForm.patchValue({ cityId: '' });
+      });
+    } else {
+      this.loadAllCities();
+    }
+  }
 
   submit() {
     if (this.registerForm.invalid) {
       return;
     }
-
-    this.ownerAuth.register(this.registerForm.value).subscribe(() => {
-      this.ownerAuth
-        .login({
-          email: this.registerForm.value.email!,
-          password: this.registerForm.value.password!
-        })
-        .subscribe(() => this.router.navigate(['/owner/dashboard']));
+    const formValue = this.registerForm.value;
+    const payload = {
+      companyName: formValue.companyName ?? '',
+      primaryContactName: formValue.primaryContactName ?? '',
+      email: formValue.email ?? '',
+      password: formValue.password ?? '',
+      confirmPassword: formValue.confirmPassword ?? formValue.password ?? '',
+      cityId: formValue.cityId ?? '',
+      phoneNumber: formValue.phoneNumber || undefined
+    };
+    this.ownerAuth.register(payload).subscribe({
+      next: () => {
+        this.toast.success('Registration successful! Redirecting to dashboard...');
+        this.router.navigate(['/owner/dashboard']);
+      },
+      error: (err) => {
+        console.error('Registration failed:', err);
+        const errorMessage = err?.error?.title || err?.error?.message || err?.message || 'Registration failed. Please try again.';
+        this.toast.error(errorMessage);
+      }
     });
   }
 }
-

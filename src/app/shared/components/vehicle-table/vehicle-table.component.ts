@@ -33,10 +33,10 @@ export class VehicleTableComponent {
   ];
 
   readonly statuses: VehicleStatus[] = [
-    'Active',
-    'Inactive',
+    'Available',
+    'InTransit',
     'Maintenance',
-    'Decommissioned'
+    'Offline'
   ];
 
   trackByVehicle(_index: number, vehicle: VehicleSummary) {

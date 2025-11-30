@@ -22,3 +22,5 @@ import { OwnerRegisterComponent } from './pages/owner-register/owner-register.co
 })
 export class OwnerModule {}
 
+
+

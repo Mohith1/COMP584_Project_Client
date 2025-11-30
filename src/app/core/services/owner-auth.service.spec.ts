@@ -29,13 +29,14 @@ describe('OwnerAuthService', () => {
     const mockResponse = {
       accessToken: 'abc',
       refreshToken: 'xyz',
-      expiresIn: 3600,
+      expiresAtUtc: new Date(Date.now() + 3600000).toISOString(),
       owner: {
         id: 'owner-1',
-        firstName: 'Alex',
-        lastName: 'Fleet',
-        email: 'alex@example.com',
-        companyName: 'Fleet Co'
+        companyName: 'Fleet Co',
+        contactEmail: 'alex@example.com',
+        contactPhone: '+1234567890',
+        city: 'New York',
+        country: 'USA'
       }
     };
 
@@ -52,4 +53,3 @@ describe('OwnerAuthService', () => {
     req.flush(mockResponse);
   });
 });
-

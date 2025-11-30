@@ -13,11 +13,12 @@ export class OwnerProfileComponent implements OnInit {
   readonly owner = this.ownerState.owner;
 
   profileForm = this.fb.group({
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
-    email: [{ value: '', disabled: true }],
-    companyName: ['', Validators.required],
-    phoneNumber: ['']
+    companyName: [{ value: '', disabled: true }],
+    contactEmail: [{ value: '', disabled: true }],
+    contactPhone: [''],
+    city: [{ value: '', disabled: true }],
+    country: [{ value: '', disabled: true }],
+    timeZone: ['']
   });
 
   constructor(
@@ -28,7 +29,14 @@ export class OwnerProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.ownerAuth.loadProfile().subscribe((profile) => {
-      this.profileForm.patchValue(profile);
+      this.profileForm.patchValue({
+        companyName: profile.companyName,
+        contactEmail: profile.contactEmail,
+        contactPhone: profile.contactPhone ?? '',
+        city: profile.city ?? '',
+        country: profile.country ?? '',
+        timeZone: profile.timeZone ?? ''
+      });
     });
   }
 
@@ -36,11 +44,20 @@ export class OwnerProfileComponent implements OnInit {
     if (this.profileForm.invalid) {
       return;
     }
+    const formValue = this.profileForm.getRawValue();
+    const ownerId = this.ownerAuth.ownerId();
+    if (!ownerId) {
+      return;
+    }
+    const profile = {
+      ownerId,
+      contactPhone: formValue.contactPhone ?? undefined,
+      timeZone: formValue.timeZone ?? undefined
+    };
     this.ownerAuth
-      .updateProfile(this.profileForm.getRawValue())
+      .updateProfile(profile)
       .subscribe(() => {
         this.ownerAuth.loadProfile().subscribe();
       });
   }
 }
-

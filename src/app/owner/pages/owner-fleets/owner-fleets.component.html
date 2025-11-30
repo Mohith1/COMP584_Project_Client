@@ -32,7 +32,16 @@
       <form [formGroup]="fleetForm" (ngSubmit)="saveFleet()">
         <mat-form-field appearance="outline">
           <mat-label>Name</mat-label>
-          <input matInput formControlName="name" />
+          <input matInput formControlName="name" maxlength="128" />
+          <mat-error *ngIf="fleetForm.get('name')?.hasError('required')">
+            Fleet name is required.
+          </mat-error>
+          <mat-error *ngIf="fleetForm.get('name')?.hasError('maxlength')">
+            Fleet name cannot exceed 128 characters.
+          </mat-error>
+          <mat-error *ngIf="fleetForm.get('name')?.hasError('serverError')">
+            {{ fleetForm.get('name')?.errors?.['serverError'] }}
+          </mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -46,11 +55,21 @@
             <mat-option value="Active">Active</mat-option>
             <mat-option value="Inactive">Inactive</mat-option>
           </mat-select>
+          <mat-error *ngIf="fleetForm.get('status')?.hasError('required')">
+            Status is required.
+          </mat-error>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" type="submit">
-          {{ selectedFleet ? 'Save changes' : 'Create fleet' }}
-        </button>
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="fleetForm.invalid || isSubmittingFleet"
+          >
+            {{ isSubmittingFleet ? 'Saving...' : (selectedFleet ? 'Save changes' : 'Create fleet') }}
+          </button>
+        </div>
       </form>
     </mat-card>
 
@@ -59,34 +78,108 @@
       <form [formGroup]="vehicleForm" (ngSubmit)="submitVehicle()">
         <div class="vehicle-form">
           <mat-form-field appearance="outline">
-            <mat-label>VIN</mat-label>
-            <input matInput formControlName="vin" />
+            <mat-label>VIN (Vehicle Identification Number)</mat-label>
+            <input
+              matInput
+              formControlName="vin"
+              maxlength="17"
+              style="font-family: monospace; text-transform: uppercase;"
+            />
+            <mat-hint>Must be 11-17 characters, alphanumeric (no I, O, Q)</mat-hint>
+            <mat-error *ngIf="vinControl?.hasError('required')">
+              VIN is required.
+            </mat-error>
+            <mat-error *ngIf="vinControl?.hasError('vinLength')">
+              VIN must be 11-17 characters (currently
+              {{ normalizeVin(vinControl?.value || '')?.length || 0 }}).
+            </mat-error>
+            <mat-error *ngIf="vinControl?.hasError('vinFormat')">
+              VIN cannot contain letters I, O, or Q.
+            </mat-error>
+            <mat-error *ngIf="vinControl?.hasError('duplicate') || vinControl?.hasError('serverError')">
+              {{ vinValidationMessage }}
+            </mat-error>
           </mat-form-field>
+
           <mat-form-field appearance="outline">
-            <mat-label>Make</mat-label>
-            <input matInput formControlName="make" />
+            <mat-label>Plate Number</mat-label>
+            <input
+              matInput
+              formControlName="plateNumber"
+              maxlength="16"
+              style="text-transform: uppercase;"
+            />
+            <mat-error *ngIf="vehicleForm.get('plateNumber')?.hasError('required')">
+              Plate number is required.
+            </mat-error>
+            <mat-error *ngIf="vehicleForm.get('plateNumber')?.hasError('maxlength')">
+              Plate number cannot exceed 16 characters.
+            </mat-error>
+            <mat-error *ngIf="vehicleForm.get('plateNumber')?.hasError('serverError')">
+              {{ vehicleForm.get('plateNumber')?.errors?.['serverError'] }}
+            </mat-error>
           </mat-form-field>
+
           <mat-form-field appearance="outline">
-            <mat-label>Model</mat-label>
-            <input matInput formControlName="model" />
+            <mat-label>Make (optional)</mat-label>
+            <input matInput formControlName="make" maxlength="64" />
+            <mat-error *ngIf="vehicleForm.get('make')?.hasError('maxlength')">
+              Make cannot exceed 64 characters.
+            </mat-error>
+            <mat-error *ngIf="vehicleForm.get('make')?.hasError('serverError')">
+              {{ vehicleForm.get('make')?.errors?.['serverError'] }}
+            </mat-error>
           </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Model (optional)</mat-label>
+            <input matInput formControlName="model" maxlength="64" />
+            <mat-error *ngIf="vehicleForm.get('model')?.hasError('maxlength')">
+              Model cannot exceed 64 characters.
+            </mat-error>
+            <mat-error *ngIf="vehicleForm.get('model')?.hasError('serverError')">
+              {{ vehicleForm.get('model')?.errors?.['serverError'] }}
+            </mat-error>
+          </mat-form-field>
+
           <mat-form-field appearance="outline">
             <mat-label>Year</mat-label>
-            <input matInput type="number" formControlName="year" />
+            <mat-select formControlName="year">
+              <mat-option *ngFor="let year of years" [value]="year">
+                {{ year }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="vehicleForm.get('year')?.hasError('required')">
+              Year is required.
+            </mat-error>
+            <mat-error *ngIf="vehicleForm.get('year')?.hasError('min') || vehicleForm.get('year')?.hasError('max')">
+              Year must be between 1900 and {{ currentYear + 1 }}.
+            </mat-error>
+            <mat-error *ngIf="vehicleForm.get('year')?.hasError('serverError')">
+              {{ vehicleForm.get('year')?.errors?.['serverError'] }}
+            </mat-error>
           </mat-form-field>
+
           <mat-form-field appearance="outline">
             <mat-label>Status</mat-label>
             <mat-select formControlName="status">
-              <mat-option value="Active">Active</mat-option>
-              <mat-option value="Inactive">Inactive</mat-option>
+              <mat-option value="Available">Available</mat-option>
+              <mat-option value="InTransit">In Transit</mat-option>
               <mat-option value="Maintenance">Maintenance</mat-option>
-              <mat-option value="Decommissioned">Decommissioned</mat-option>
+              <mat-option value="Offline">Offline</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
-        <button mat-stroked-button color="primary" type="submit">
-          Add vehicle
-        </button>
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="vehicleForm.invalid || isSubmittingVehicle"
+          >
+            {{ isSubmittingVehicle ? 'Adding...' : 'Add vehicle' }}
+          </button>
+        </div>
       </form>
     </mat-card>
 

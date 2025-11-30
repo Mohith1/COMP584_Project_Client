@@ -1,4 +1,27 @@
 .chips {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  
+  mat-chip {
+    font-weight: 500;
+  }
 }
+
+mat-card {
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--mat-divider-color, rgba(0, 0, 0, 0.12));
+    
+    mat-icon {
+      color: #3b82f6;
+    }
+  }
+}
+
 

@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://localhost:5001',
+  apiUrl: 'https://localhost:7211',
   okta: {
     domain: 'https://{yourOktaDomain}',
     clientId: '{yourOktaClientId}',

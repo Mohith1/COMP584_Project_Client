@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   UpsertVehicleRequest,
@@ -20,6 +20,11 @@ export class VehicleService {
     return this.http.post<VehicleSummary>(
       `${this.baseUrl}/api/fleets/${fleetId}/vehicles`,
       payload
+    ).pipe(
+      map(response => ({
+        ...response,
+        year: response.modelYear // Add legacy 'year' field for template compatibility
+      }))
     );
   }
 
@@ -27,6 +32,11 @@ export class VehicleService {
     return this.http.put<VehicleSummary>(
       `${this.baseUrl}/api/vehicles/${vehicleId}`,
       payload
+    ).pipe(
+      map(response => ({
+        ...response,
+        year: response.modelYear // Add legacy 'year' field for template compatibility
+      }))
     );
   }
 
@@ -34,6 +44,11 @@ export class VehicleService {
     return this.http.put<VehicleSummary>(
       `${this.baseUrl}/api/vehicles/${vehicleId}`,
       { status }
+    ).pipe(
+      map(response => ({
+        ...response,
+        year: response.modelYear // Add legacy 'year' field for template compatibility
+      }))
     );
   }
 
@@ -43,4 +58,5 @@ export class VehicleService {
       .pipe(map(() => vehicleId));
   }
 }
+
 

@@ -1,25 +1,108 @@
 .owner-shell {
   height: 100vh;
+  background-color: #f9fafb;
 }
 
 mat-sidenav {
-  width: 220px;
-  padding: 1rem;
+  width: 260px;
+  padding: 0;
+  background-color: white;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid #e5e7eb;
 
   .brand {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
+    gap: 0.75rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    padding: 1.5rem 1.25rem;
+    margin-bottom: 0.5rem;
+    color: #111827;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    
+    mat-icon {
+      font-size: 1.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  mat-nav-list {
+    padding: 0.5rem 0;
+    
+    a {
+      margin: 0.25rem 0.75rem;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      color: #4b5563;
+      
+      mat-icon {
+        color: #6b7280;
+        margin-right: 0.75rem;
+        transition: color 0.2s ease;
+      }
+      
+      &:hover:not(.active) {
+        background-color: #f3f4f6;
+        color: #111827;
+        
+        mat-icon {
+          color: #2563eb;
+        }
+      }
+      
+      &.active {
+        background-color: rgba(37, 99, 235, 0.1);
+        color: #2563eb;
+        font-weight: 600;
+        
+        mat-icon {
+          color: #2563eb;
+        }
+      }
+    }
+  }
+
+  button[mat-button] {
+    position: absolute;
+    bottom: 1rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    width: calc(100% - 1.5rem);
+    justify-content: flex-start;
+    color: #dc2626;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    
+    mat-icon {
+      margin-right: 0.75rem;
+    }
+    
+    &:hover {
+      background-color: rgba(220, 38, 38, 0.1);
+      color: #b91c1c;
+    }
   }
 }
 
 .owner-shell__content {
-  padding: 1.5rem;
+  padding: 2rem;
+  background-color: #f9fafb;
+  min-height: 100vh;
 }
 
-a.active {
-  background-color: rgba(37, 99, 235, 0.1);
+@media (max-width: 768px) {
+  mat-sidenav {
+    width: 240px;
+  }
+
+  .owner-shell__content {
+    padding: 1rem;
+  }
 }
+
 

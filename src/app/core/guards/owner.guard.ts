@@ -35,7 +35,7 @@ export class OwnerGuard implements CanActivate, CanActivateChild {
       map(() => {
         if (this.ownerAuth.isAuthenticated()) {
           this.personaService.setPersona('owner');
-          return true;
+          return true as boolean | UrlTree;
         }
         return this.router.createUrlTree(['/owner/login']);
       }),
@@ -50,4 +50,3 @@ export class OwnerGuard implements CanActivate, CanActivateChild {
     return this.canActivate(route, state);
   }
 }
-

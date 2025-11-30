@@ -1,27 +1,31 @@
 import { TelemetrySnapshot } from './telemetry.model';
 
 export type VehicleStatus =
-  | 'Active'
-  | 'Inactive'
+  | 'Available'
+  | 'InTransit'
   | 'Maintenance'
-  | 'Decommissioned';
+  | 'Offline';
 
 export interface VehicleSummary {
   id: string;
   fleetId: string;
   vin: string;
-  make: string;
-  model: string;
-  year: number;
+  plateNumber: string;
+  make?: string | null;
+  model?: string | null;
+  modelYear: number;
   status: VehicleStatus;
   lastTelemetry?: TelemetrySnapshot;
+  // Legacy field name for template compatibility - maps to modelYear
+  year?: number;
 }
 
 export interface UpsertVehicleRequest {
   vin: string;
-  make: string;
-  model: string;
-  year: number;
+  plateNumber: string;
+  make?: string | null;
+  model?: string | null;
+  modelYear: number;
   status?: VehicleStatus;
 }
 
@@ -29,4 +33,5 @@ export interface UpdateVehicleStatusRequest {
   vehicleId: string;
   status: VehicleStatus;
 }
+
 

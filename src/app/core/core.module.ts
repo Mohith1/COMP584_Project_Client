@@ -13,9 +13,16 @@ const oktaAuth = new OktaAuth({
   clientId: environment.okta.clientId,
   redirectUri: environment.okta.redirectUri,
   scopes: ['openid', 'profile', 'email'],
+  pkce: true, // Required for Auth0 SPAs
   tokenManager: {
     storage: 'sessionStorage'
-  }
+  },
+  // Include audience for API access (Auth0 requirement)
+  ...(environment.okta.audience && {
+    additionalParams: {
+      audience: environment.okta.audience
+    }
+  })
 });
 
 @NgModule({
@@ -33,4 +40,6 @@ export class CoreModule {
     }
   }
 }
+
+
 

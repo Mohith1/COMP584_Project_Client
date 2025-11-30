@@ -3,15 +3,56 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .auth-card {
-  max-width: 360px;
+  max-width: 420px;
   width: 100%;
 
   mat-card {
-    padding: 1.5rem;
+    padding: 2.5rem;
     text-align: center;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  mat-card-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #111827;
+  }
+  
+  form {
+    margin: 2rem 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  
+  mat-form-field {
+    width: 100%;
+  }
+  
+  button[type="submit"] {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
   }
 }
+
+@media (max-width: 768px) {
+  :host {
+    padding: 1rem;
+  }
+
+  .auth-card mat-card {
+    padding: 1.5rem;
+  }
+}
+
 
