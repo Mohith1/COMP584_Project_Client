@@ -331,27 +331,44 @@ a {
 .mat-mdc-form-field-appearance-outline {
   .mat-mdc-text-field-wrapper {
     .mat-mdc-form-field-flex {
+      min-height: 56px;
+      
       .mat-mdc-form-field-input-control {
         .mat-mdc-input-element {
-          padding-top: 1rem;
-          padding-bottom: 0.5rem;
+          padding-top: 16px !important;
+          padding-bottom: 8px !important;
+          height: auto !important;
+          line-height: 1.5 !important;
         }
       }
     }
   }
   
-  // Ensure label doesn't overlap input text
-  .mat-mdc-form-field-label-wrapper {
-    .mat-mdc-form-field-label {
-      pointer-events: none;
+  // With floatLabel="always", label should always be floating
+  &.mat-form-field-label-always-float {
+    .mat-mdc-form-field-label-wrapper {
+      .mat-mdc-form-field-label {
+        transform: translateY(-1.28125rem) scale(0.75) !important;
+        top: 0 !important;
+      }
+    }
+    
+    .mat-mdc-form-field-input-control {
+      .mat-mdc-input-element {
+        padding-top: 16px !important;
+      }
     }
   }
   
-  // When field has value or is focused, label should be floating
-  &.mat-focused .mat-mdc-form-field-label,
-  &.mat-form-field-should-float .mat-mdc-form-field-label,
-  .mat-mdc-form-field-label.mdc-floating-label--float-above {
-    transform: translateY(-1.28125rem) scale(0.75) !important;
+  // Also handle when field has value or is focused (for fields without floatLabel="always")
+  &.mat-focused,
+  &.mat-form-field-should-float {
+    .mat-mdc-form-field-label-wrapper {
+      .mat-mdc-form-field-label {
+        transform: translateY(-1.28125rem) scale(0.75) !important;
+        top: 0 !important;
+      }
+    }
   }
 }
 

@@ -28,12 +28,25 @@
   form {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.5rem;
     margin: 2rem 0 1.5rem 0;
   }
 
   mat-form-field {
     width: 100%;
+    
+    // Ensure proper spacing and no overlap
+    ::ng-deep {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-flex {
+          min-height: 56px;
+        }
+      }
+      
+      .mat-mdc-form-field-label {
+        font-weight: 500;
+      }
+    }
   }
 
   .grid {
