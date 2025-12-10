@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://localhost:7211',
+  apiUrl: 'https://fleetmanagement-api-production.up.railway.app',
   okta: {
     domain: 'https://{yourOktaDomain}',
     clientId: '{yourOktaClientId}',

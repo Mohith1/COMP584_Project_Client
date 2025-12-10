@@ -36,7 +36,7 @@ export class CityService {
   constructor(private readonly http: HttpClient) {}
 
   getCountries(): Observable<Country[]> {
-    return this.http.get<Country[]>(`${this.baseUrl}/api/countries`).pipe(
+    return this.http.get<Country[]>(`${this.baseUrl}/api/Countries`).pipe(
       catchError(() => of([]))
     );
   }
@@ -50,7 +50,7 @@ export class CityService {
       params = params.set('search', search);
     }
 
-    return this.http.get<CitiesResponse>(`${this.baseUrl}/api/cities`, { params }).pipe(
+    return this.http.get<CitiesResponse>(`${this.baseUrl}/api/Cities`, { params }).pipe(
       map(response => response.items),
       catchError(() => of([]))
     );

@@ -37,3 +37,10 @@ export class TelemetryHighlightsComponent {
 
 
 
+
+
+
+
+
+
+

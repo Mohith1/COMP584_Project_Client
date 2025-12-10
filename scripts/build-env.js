@@ -12,11 +12,11 @@ const envPath = path.join(__dirname, '../src/environments/environment.ts');
 const templatePath = path.join(__dirname, '../src/environments/environment.prod.template.ts');
 
 // Read environment variables from process.env (set by Vercel)
-const apiUrl = process.env.NG_APP_API_URL || process.env.API_URL || 'https://your-production-api-url.com';
-const oktaDomain = process.env.NG_APP_OKTA_DOMAIN || process.env.OKTA_DOMAIN || 'dev-7h4cbt1x17lvbozu.us.auth0.com';
-const oktaClientId = process.env.NG_APP_OKTA_CLIENT_ID || process.env.OKTA_CLIENT_ID || 'vbmmwzXgCr83bRKDVY7Vzy0vfP5PZ0Qc';
-const oktaIssuer = process.env.NG_APP_OKTA_ISSUER || process.env.OKTA_ISSUER || `https://${oktaDomain}/`;
-const oktaAudience = process.env.NG_APP_OKTA_AUDIENCE || process.env.OKTA_AUDIENCE || 'https://fleet-management-api';
+const apiUrl = process.env.NG_APP_API_URL || process.env.API_URL || 'https://fleetmanagement-api-production.up.railway.app';
+const oktaDomain = process.env.NG_APP_OKTA_DOMAIN || process.env.OKTA_DOMAIN || '{yourOktaDomain}';
+const oktaClientId = process.env.NG_APP_OKTA_CLIENT_ID || process.env.OKTA_CLIENT_ID || '{yourOktaClientId}';
+const oktaIssuer = process.env.NG_APP_OKTA_ISSUER || process.env.OKTA_ISSUER || `https://${oktaDomain}/oauth2/default`;
+const oktaAudience = process.env.NG_APP_OKTA_AUDIENCE || process.env.OKTA_AUDIENCE || 'api://default';
 const oktaRedirectUri = process.env.NG_APP_OKTA_REDIRECT_URI || process.env.OKTA_REDIRECT_URI || 'https://your-vercel-app.vercel.app/user/login/callback';
 
 // Generate environment.ts content
@@ -44,4 +44,11 @@ try {
   console.error('❌ Error updating environment file:', error);
   process.exit(1);
 }
+
+
+
+
+
+
+
 

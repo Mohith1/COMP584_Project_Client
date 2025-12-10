@@ -18,7 +18,7 @@ export class VehicleService {
 
   addVehicle(fleetId: string, payload: UpsertVehicleRequest) {
     return this.http.post<VehicleSummary>(
-      `${this.baseUrl}/api/fleets/${fleetId}/vehicles`,
+      `${this.baseUrl}/api/Fleets/${fleetId}/vehicles`,
       payload
     ).pipe(
       map(response => ({
@@ -30,7 +30,7 @@ export class VehicleService {
 
   updateVehicle(vehicleId: string, payload: UpsertVehicleRequest) {
     return this.http.put<VehicleSummary>(
-      `${this.baseUrl}/api/vehicles/${vehicleId}`,
+      `${this.baseUrl}/api/Vehicles/${vehicleId}`,
       payload
     ).pipe(
       map(response => ({
@@ -42,7 +42,7 @@ export class VehicleService {
 
   updateStatus(vehicleId: string, status: VehicleStatus) {
     return this.http.put<VehicleSummary>(
-      `${this.baseUrl}/api/vehicles/${vehicleId}`,
+      `${this.baseUrl}/api/Vehicles/${vehicleId}`,
       { status }
     ).pipe(
       map(response => ({
@@ -54,7 +54,7 @@ export class VehicleService {
 
   deleteVehicle(vehicleId: string) {
     return this.http
-      .delete<void>(`${this.baseUrl}/api/vehicles/${vehicleId}`)
+      .delete<void>(`${this.baseUrl}/api/Vehicles/${vehicleId}`)
       .pipe(map(() => vehicleId));
   }
 }

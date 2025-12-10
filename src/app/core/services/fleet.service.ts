@@ -39,7 +39,7 @@ export class FleetService {
   }
 
   getFleetDetail(fleetId: string) {
-    return this.http.get<FleetDetail>(`${this.baseUrl}/api/fleets/${fleetId}`).pipe(
+    return this.http.get<FleetDetail>(`${this.baseUrl}/api/Fleets/${fleetId}`).pipe(
       map(fleet => ({
         ...fleet,
         vehicles: fleet.vehicles.map(vehicle => ({
@@ -59,14 +59,14 @@ export class FleetService {
 
   updateFleet(fleetId: string, payload: UpsertFleetRequest) {
     return this.http.put<FleetSummary>(
-      `${this.baseUrl}/api/fleets/${fleetId}`,
+      `${this.baseUrl}/api/Fleets/${fleetId}`,
       payload
     );
   }
 
   deleteFleet(fleetId: string) {
     return this.http
-      .delete<void>(`${this.baseUrl}/api/fleets/${fleetId}`)
+      .delete<void>(`${this.baseUrl}/api/Fleets/${fleetId}`)
       .pipe(map(() => fleetId));
   }
 }

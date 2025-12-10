@@ -81,13 +81,13 @@ export class OwnerAuthService implements OnDestroy {
 
   loadProfile() {
     return this.http
-      .get<OwnerProfile>(`${this.baseUrl}/api/owners/me`)
+      .get<OwnerProfile>(`${this.baseUrl}/api/Owners/me`)
       .pipe(tap((owner) => this.setOwner(owner)));
   }
 
   updateProfile(profile: Partial<OwnerProfile>) {
     return this.http
-      .put<OwnerProfile>(`${this.baseUrl}/api/owners/me`, profile)
+      .put<OwnerProfile>(`${this.baseUrl}/api/Owners/me`, profile)
       .pipe(tap((owner) => this.setOwner(owner)));
   }
 
