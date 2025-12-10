@@ -305,6 +305,7 @@ a {
 // ============================================
 .mat-mdc-form-field {
   margin-bottom: $spacing-md;
+  width: 100%;
   
   .mat-mdc-text-field-wrapper {
     border-radius: 8px;
@@ -323,6 +324,35 @@ a {
 
 .mat-mdc-form-field-subscript-wrapper {
   margin-top: $spacing-xs;
+  min-height: 1.5rem;
+}
+
+// Fix for Material 17 form field label overlap - ensure proper spacing
+.mat-mdc-form-field-appearance-outline {
+  .mat-mdc-text-field-wrapper {
+    .mat-mdc-form-field-flex {
+      .mat-mdc-form-field-input-control {
+        .mat-mdc-input-element {
+          padding-top: 1rem;
+          padding-bottom: 0.5rem;
+        }
+      }
+    }
+  }
+  
+  // Ensure label doesn't overlap input text
+  .mat-mdc-form-field-label-wrapper {
+    .mat-mdc-form-field-label {
+      pointer-events: none;
+    }
+  }
+  
+  // When field has value or is focused, label should be floating
+  &.mat-focused .mat-mdc-form-field-label,
+  &.mat-form-field-should-float .mat-mdc-form-field-label,
+  .mat-mdc-form-field-label.mdc-floating-label--float-above {
+    transform: translateY(-1.28125rem) scale(0.75) !important;
+  }
 }
 
 // ============================================

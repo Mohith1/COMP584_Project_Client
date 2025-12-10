@@ -1,8 +1,20 @@
 <section class="auth-card">
   <mat-card>
     <mat-card-title>Sign in with Okta</mat-card-title>
-    <p>Drivers and dispatchers authenticate with Okta SSO.</p>
-    <button mat-raised-button color="primary" (click)="login()">
+    <div class="auth-info">
+      <p class="description">
+        Drivers and dispatchers authenticate using Okta Single Sign-On (SSO).
+      </p>
+      <div class="info-box">
+        <mat-icon>info</mat-icon>
+        <p>
+          You'll be redirected to Okta's secure login page. 
+          If you don't have an account, contact your administrator to get access.
+        </p>
+      </div>
+    </div>
+    <button mat-raised-button color="primary" (click)="login()" class="login-button">
+      <mat-icon>login</mat-icon>
       Continue with Okta
     </button>
   </mat-card>
