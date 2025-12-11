@@ -1,34 +1,79 @@
-<section class="auth-card">
-  <mat-card>
-    <mat-card-title>Owner sign in</mat-card-title>
+<app-page-header
+  title="Owner Login"
+  subtitle="Sign in to access your fleet management dashboard."
+  [showPrimary]="false"
+></app-page-header>
+
+<mat-card class="login-card">
+  <mat-card-content>
     <form [formGroup]="loginForm" (ngSubmit)="submit()">
-      <mat-form-field appearance="outline" floatLabel="always">
+      <mat-form-field appearance="outline">
         <mat-label>Email</mat-label>
-        <input matInput formControlName="email" type="email" />
+        <input matInput type="email" formControlName="email" placeholder="Enter your email" />
+        <mat-icon matPrefix>email</mat-icon>
+        <mat-error *ngIf="loginForm.get('email')?.hasError('required')">
+          Email is required.
+        </mat-error>
+        <mat-error *ngIf="loginForm.get('email')?.hasError('email')">
+          Please enter a valid email address.
+        </mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" floatLabel="always">
+      <mat-form-field appearance="outline">
         <mat-label>Password</mat-label>
-        <input matInput type="password" formControlName="password" />
+        <input 
+          matInput 
+          [type]="showPassword ? 'text' : 'password'" 
+          formControlName="password" 
+          placeholder="Enter your password"
+          (focus)="showPasswordRules = true"
+          (blur)="onPasswordBlur()"
+        />
+        <mat-icon matPrefix>lock</mat-icon>
+        <button 
+          mat-icon-button 
+          matSuffix 
+          type="button"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="'Toggle password visibility'"
+        >
+          <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
+          Password is required.
+        </mat-error>
       </mat-form-field>
 
-      <button mat-raised-button color="primary" type="submit">
-        Sign in
+      <div class="password-rules" *ngIf="showPasswordRules">
+        <p class="rules-title">Password Requirements:</p>
+        <ul class="rules-list">
+          <li [class.valid]="(loginForm.get('password')?.value?.length || 0) >= 12">
+            <mat-icon class="rule-icon">{{ (loginForm.get('password')?.value?.length || 0) >= 12 ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+            <span>Minimum 12 characters</span>
+          </li>
+        </ul>
+        <p class="rules-hint">Tip: Your password must be at least 12 characters long. For better security, use a mix of uppercase, lowercase, numbers, and special characters.</p>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Country (Optional)</mat-label>
+        <mat-select formControlName="countryId">
+          <mat-option value="">-- Select Country (Optional) --</mat-option>
+          <mat-option *ngFor="let country of countries" [value]="country.id">
+            {{ country.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit" 
+        [disabled]="loginForm.invalid"
+        class="submit-button"
+      >
+        Sign In
       </button>
     </form>
-    <p>
-      Need an account?
-      <a routerLink="/owner/register">Register an owner</a>
-    </p>
-  </mat-card>
-</section>
-
-
-
-
-
-
-
-
-
-
+  </mat-card-content>
+</mat-card>
