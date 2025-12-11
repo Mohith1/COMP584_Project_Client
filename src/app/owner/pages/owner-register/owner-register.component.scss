@@ -1,102 +1,50 @@
-:host {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 2rem 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.auth-card {
-  width: 100%;
+.register-card {
   max-width: 600px;
+  margin: 2rem auto;
+}
 
-  mat-card {
-    padding: 2.5rem;
-    border-radius: 16px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  }
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 
-  mat-card-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    text-align: center;
-    color: #111827;
-  }
+mat-form-field {
+  width: 100%;
+}
 
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    margin: 2rem 0 1.5rem 0;
-  }
+.submit-button {
+  width: 100%;
+  margin-top: 1rem;
+  height: 48px;
+  font-size: 16px;
+}
 
-  mat-form-field {
-    width: 100%;
-    
-    // Ensure proper spacing and no overlap
-    ::ng-deep {
-      .mat-mdc-text-field-wrapper {
-        .mat-mdc-form-field-flex {
-          min-height: 56px;
-        }
-      }
-      
-      .mat-mdc-form-field-label {
-        font-weight: 500;
-      }
-    }
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.25rem;
-  }
-
-  button[type="submit"] {
-    width: 100%;
-    margin-top: 0.5rem;
-    padding: 0.75rem;
-    font-size: 1rem;
-    font-weight: 600;
-  }
-
+.login-link {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+  
   p {
-    text-align: center;
-    margin-top: 1.5rem;
-    color: #6b7280;
-    font-size: 0.875rem;
-
-    a {
-      color: #2563eb;
-      font-weight: 500;
-      margin-left: 0.25rem;
-      
-      &:hover {
-        text-decoration: underline;
-      }
-    }
+    margin: 0;
+    color: #666;
+    font-size: 14px;
   }
-}
-
-@media (max-width: 768px) {
-  :host {
-    padding: 1rem;
-  }
-
-  .auth-card {
-    max-width: 100%;
+  
+  a {
+    color: #2196f3;
+    text-decoration: none;
+    font-weight: 500;
     
-    mat-card {
-      padding: 1.5rem;
-    }
-
-    .grid {
-      grid-template-columns: 1fr;
+    &:hover {
+      text-decoration: underline;
     }
   }
 }
 
-
+@media (max-width: 600px) {
+  .register-card {
+    margin: 1rem;
+  }
+}
