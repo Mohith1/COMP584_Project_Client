@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { OwnerAuthService } from '../../../core/services/owner-auth.service';
@@ -32,7 +32,8 @@ export class OwnerRegisterComponent implements OnInit {
     private readonly ownerAuth: OwnerAuthService,
     private readonly router: Router,
     private readonly cityService: CityService,
-    private readonly toast: ToastService
+    private readonly toast: ToastService,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -42,8 +43,18 @@ export class OwnerRegisterComponent implements OnInit {
   }
 
   loadCountries(): void {
-    this.cityService.getCountries().subscribe((countries) => {
-      this.countries = countries;
+    this.cityService.getCountries().subscribe({
+      next: (countries) => {
+        this.countries = countries;
+        this.cdr.markForCheck();
+        if (countries.length === 0) {
+          console.warn('No countries loaded from API');
+        }
+      },
+      error: (err) => {
+        console.error('Error loading countries:', err);
+        this.toast.error('Failed to load countries. Please refresh the page.');
+      }
     });
   }
 
@@ -54,13 +65,29 @@ export class OwnerRegisterComponent implements OnInit {
     if (countryId) {
       // Load cities for the selected country (e.g., USA)
       this.isLoadingCities = true;
-      this.cityService.getCitiesByCountry(countryId).subscribe((cities) => {
-        this.cities = cities;
-        this.isLoadingCities = false;
+      this.cdr.markForCheck();
+      this.cityService.getCitiesByCountry(countryId).subscribe({
+        next: (cities) => {
+          this.cities = cities;
+          this.isLoadingCities = false;
+          this.cdr.markForCheck();
+          if (cities.length === 0) {
+            console.warn('No cities loaded for selected country');
+            this.toast.error('No cities available for the selected country.');
+          }
+        },
+        error: (err) => {
+          console.error('Error loading cities:', err);
+          this.isLoadingCities = false;
+          this.cities = [];
+          this.cdr.markForCheck();
+          this.toast.error('Failed to load cities. Please try again.');
+        }
       });
     } else {
       // If no country selected, clear cities
       this.cities = [];
+      this.cdr.markForCheck();
     }
   }
 
