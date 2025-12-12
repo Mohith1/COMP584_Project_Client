@@ -26,8 +26,6 @@
           [type]="showPassword ? 'text' : 'password'" 
           formControlName="password" 
           placeholder="Enter your password"
-          (focus)="showPasswordRules = true"
-          (blur)="onPasswordBlur()"
         />
         <mat-icon matPrefix>lock</mat-icon>
         <button 
@@ -42,27 +40,6 @@
         <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
           Password is required.
         </mat-error>
-      </mat-form-field>
-
-      <div class="password-rules" *ngIf="showPasswordRules">
-        <p class="rules-title">Password Requirements:</p>
-        <ul class="rules-list">
-          <li [class.valid]="(loginForm.get('password')?.value?.length || 0) >= 12">
-            <mat-icon class="rule-icon">{{ (loginForm.get('password')?.value?.length || 0) >= 12 ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
-            <span>Minimum 12 characters</span>
-          </li>
-        </ul>
-        <p class="rules-hint">Tip: Your password must be at least 12 characters long. For better security, use a mix of uppercase, lowercase, numbers, and special characters.</p>
-      </div>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Country (Optional)</mat-label>
-        <mat-select formControlName="countryId">
-          <mat-option value="">-- Select Country (Optional) --</mat-option>
-          <mat-option *ngFor="let country of countries" [value]="country.id">
-            {{ country.name }}
-          </mat-option>
-        </mat-select>
       </mat-form-field>
 
       <button 

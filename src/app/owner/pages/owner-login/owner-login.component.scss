@@ -20,59 +20,6 @@ mat-form-field {
   font-size: 16px;
 }
 
-.password-rules {
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  padding: 1rem;
-  margin-top: -0.5rem;
-  margin-bottom: 0.5rem;
-  border-left: 4px solid #2196f3;
-}
-
-.rules-title {
-  font-weight: 500;
-  margin: 0 0 0.5rem 0;
-  color: #333;
-  font-size: 14px;
-}
-
-.rules-list {
-  list-style: none;
-  padding: 0;
-  margin: 0.5rem 0;
-  
-  li {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 0;
-    font-size: 13px;
-    color: #666;
-    
-    .rule-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-      color: #999;
-    }
-    
-    &.valid {
-      color: #4caf50;
-      
-      .rule-icon {
-        color: #4caf50;
-      }
-    }
-  }
-}
-
-.rules-hint {
-  margin: 0.75rem 0 0 0;
-  font-size: 12px;
-  color: #666;
-  font-style: italic;
-}
-
 .signup-link {
   text-align: center;
   margin-top: 1.5rem;
