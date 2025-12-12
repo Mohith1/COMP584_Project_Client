@@ -37,7 +37,8 @@ export class OwnerRegisterComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCountries();
-    this.loadAllCities();
+    // Don't load cities until a country is selected
+    this.cities = [];
   }
 
   loadCountries(): void {
@@ -46,25 +47,20 @@ export class OwnerRegisterComponent implements OnInit {
     });
   }
 
-  loadAllCities(): void {
-    this.isLoadingCities = true;
-    this.cityService.getCities().subscribe((cities) => {
-      this.cities = cities;
-      this.isLoadingCities = false;
-    });
-  }
-
   onCountryChange(countryId: string): void {
+    // Reset city selection when country changes
+    this.registerForm.patchValue({ cityId: '' });
+    
     if (countryId) {
+      // Load cities for the selected country (e.g., USA)
       this.isLoadingCities = true;
       this.cityService.getCitiesByCountry(countryId).subscribe((cities) => {
         this.cities = cities;
         this.isLoadingCities = false;
-        // Reset city selection when country changes
-        this.registerForm.patchValue({ cityId: '' });
       });
     } else {
-      this.loadAllCities();
+      // If no country selected, clear cities
+      this.cities = [];
     }
   }
 

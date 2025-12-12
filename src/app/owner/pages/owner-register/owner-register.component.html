@@ -73,7 +73,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>City</mat-label>
-        <mat-select formControlName="cityId" [disabled]="isLoadingCities">
+        <mat-select formControlName="cityId" [disabled]="isLoadingCities || !registerForm.get('countryId')?.value">
           <mat-option value="">-- Select City --</mat-option>
           <mat-option *ngFor="let city of cities" [value]="city.id">
             {{ city.name }}
@@ -81,6 +81,7 @@
         </mat-select>
         <mat-icon matPrefix>location_city</mat-icon>
         <mat-spinner *ngIf="isLoadingCities" matSuffix diameter="20"></mat-spinner>
+        <mat-hint *ngIf="!registerForm.get('countryId')?.value">Please select a country first</mat-hint>
         <mat-error *ngIf="registerForm.get('cityId')?.hasError('required')">
           City is required.
         </mat-error>
