@@ -117,26 +117,24 @@ export class OwnerAuthService implements OnDestroy {
    * Sync owner state with Okta authentication
    */
   syncWithOktaAuth(): Observable<OwnerProfile | null> {
-    return from(this.oktaAuth.getAccessToken()).pipe(
-      switchMap((token) => {
-        if (!token) {
-          return of(null);
-        }
-        
-        // Set the Okta token
-        this.authState.update((state) => ({
-          ...state,
-          accessToken: token
-        }));
+    const token = this.oktaAuth.getAccessToken();
+    
+    if (!token) {
+      return of(null);
+    }
+    
+    // Set the Okta token
+    this.authState.update((state) => ({
+      ...state,
+      accessToken: token
+    }));
 
-        // Try to load existing owner profile
-        return this.loadProfile().pipe(
-          tap((owner) => {
-            this.personaService.setPersona('owner');
-          }),
-          catchError(() => of(null))
-        );
-      })
+    // Try to load existing owner profile
+    return this.loadProfile().pipe(
+      tap(() => {
+        this.personaService.setPersona('owner');
+      }),
+      catchError(() => of(null))
     );
   }
 

@@ -20,12 +20,12 @@ export class OwnerShellComponent {
     private readonly router: Router
   ) {}
 
-  logout() {
-    this.ownerAuth.logout().subscribe(() => {
-      this.router.navigate(['/owner/login']);
-    });
+  async logout(): Promise<void> {
+    await this.ownerAuth.logout();
+    this.router.navigate(['/owner/login']);
   }
 }
+
 
 
 
