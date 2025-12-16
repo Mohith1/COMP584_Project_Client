@@ -3,12 +3,11 @@ import {
   ActivatedRouteSnapshot,
   CanActivate,
   CanActivateChild,
-  Router,
   RouterStateSnapshot,
   UrlTree
 } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable, from, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { OwnerAuthService } from '../services/owner-auth.service';
 import { PersonaService } from '../services/persona.service';
 
@@ -18,35 +17,51 @@ import { PersonaService } from '../services/persona.service';
 export class OwnerGuard implements CanActivate, CanActivateChild {
   constructor(
     private readonly ownerAuth: OwnerAuthService,
-    private readonly router: Router,
     private readonly personaService: PersonaService
   ) {}
 
   canActivate(
     _route: ActivatedRouteSnapshot,
-    _state: RouterStateSnapshot
-  ): Observable<boolean | UrlTree> | boolean | UrlTree {
-    if (this.ownerAuth.isAuthenticated()) {
-      this.personaService.setPersona('owner');
-      return true;
-    }
+    state: RouterStateSnapshot
+  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    return from(this.ownerAuth.isOktaAuthenticated()).pipe(
+      switchMap((isAuth) => {
+        if (!isAuth) {
+          // Not authenticated with Okta, redirect to login
+          this.ownerAuth.loginWithOkta(state.url);
+          return of(false);
+        }
 
-    return this.ownerAuth.refresh().pipe(
-      map(() => {
+        // Check if owner profile exists, if not sync with backend
         if (this.ownerAuth.isAuthenticated()) {
           this.personaService.setPersona('owner');
-          return true as boolean | UrlTree;
+          return of(true);
         }
-        return this.router.createUrlTree(['/owner/login']);
+
+        // Try to sync/load owner profile from backend
+        return this.ownerAuth.syncWithOktaAuth().pipe(
+          map((owner) => {
+            if (owner) {
+              this.personaService.setPersona('owner');
+              return true;
+            }
+            // Authenticated but no owner profile - redirect to register
+            return false;
+          }),
+          catchError(() => of(false))
+        );
       }),
-      catchError(() => of(this.router.createUrlTree(['/owner/login'])))
+      catchError(() => {
+        this.ownerAuth.loginWithOkta(state.url);
+        return of(false);
+      })
     );
   }
 
   canActivateChild(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): Observable<boolean | UrlTree> | boolean | UrlTree {
+  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     return this.canActivate(route, state);
   }
 }

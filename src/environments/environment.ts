@@ -6,7 +6,7 @@ export const environment = {
     clientId: '{yourOktaClientId}',
     issuer: 'https://{yourOktaDomain}/oauth2/default',
     audience: 'api://default',
-    redirectUri: 'https://your-production-host/user/login/callback'
+    redirectUri: 'https://your-production-host/owner/login/callback'
   }
 } as const;
 

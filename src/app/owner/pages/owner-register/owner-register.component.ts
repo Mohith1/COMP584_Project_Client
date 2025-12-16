@@ -126,7 +126,7 @@ export class OwnerRegisterComponent implements OnInit {
     return null;
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (this.registerForm.invalid || this.isLoading()) {
       // Mark all fields as touched to show validation errors
       this.registerForm.markAllAsTouched();
@@ -146,16 +146,15 @@ export class OwnerRegisterComponent implements OnInit {
       phoneNumber: formValue.phoneNumber || undefined
     };
 
-    this.ownerAuth.register(payload).subscribe({
-      next: () => {
-        this.toast.success('Registration successful! Welcome aboard.');
-        this.router.navigate(['/owner/dashboard']);
-      },
-      error: (err) => {
-        this.isLoading.set(false);
-        const message = err?.error?.message || 'Registration failed. Please try again.';
-        this.toast.error(message);
-      }
-    });
+    try {
+      // This will store the registration data and redirect to Okta
+      await this.ownerAuth.initiateRegistration(payload);
+      // The page will redirect, so we don't need to handle success here
+    } catch (err: unknown) {
+      this.isLoading.set(false);
+      const error = err as { error?: { message?: string } };
+      const message = error?.error?.message || 'Registration failed. Please try again.';
+      this.toast.error(message);
+    }
   }
 }

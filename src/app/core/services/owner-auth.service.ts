@@ -1,7 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, OnDestroy, computed, signal } from '@angular/core';
-import { Observable, Subscription, of, timer } from 'rxjs';
-import { tap, finalize, map, switchMap } from 'rxjs/operators';
+import { Inject, Injectable, OnDestroy, computed, signal } from '@angular/core';
+import { Observable, Subscription, of, timer, from } from 'rxjs';
+import { tap, finalize, map, switchMap, catchError } from 'rxjs/operators';
+import { OKTA_AUTH } from '@okta/okta-angular';
+import { OktaAuth } from '@okta/okta-auth-js';
 import { environment } from '../../../environments/environment';
 import {
   OwnerAuthResponse,
@@ -37,12 +39,112 @@ export class OwnerAuthService implements OnDestroy {
   constructor(
     private readonly http: HttpClient,
     private readonly ownerState: OwnerStateService,
-    private readonly personaService: PersonaService
+    private readonly personaService: PersonaService,
+    @Inject(OKTA_AUTH) private readonly oktaAuth: OktaAuth
   ) {}
 
-  register(payload: OwnerRegisterRequest) {
+  /**
+   * Check if user is authenticated with Okta
+   */
+  isOktaAuthenticated(): Promise<boolean> {
+    return this.oktaAuth.isAuthenticated();
+  }
+
+  /**
+   * Get Okta access token
+   */
+  async getOktaAccessToken(): Promise<string | undefined> {
+    return this.oktaAuth.getAccessToken();
+  }
+
+  /**
+   * Initiate Okta login redirect
+   */
+  async loginWithOkta(returnTo?: string): Promise<void> {
+    await this.oktaAuth.signInWithRedirect({
+      originalUri: returnTo ?? '/owner/dashboard'
+    });
+  }
+
+  /**
+   * Store pending registration data and redirect to Okta for authentication
+   */
+  async initiateRegistration(payload: OwnerRegisterRequest): Promise<void> {
+    // Store the registration data to complete after Okta auth
+    sessionStorage.setItem(
+      STORAGE_KEYS.pendingOwnerRegistration,
+      JSON.stringify(payload)
+    );
+    
+    // Redirect to Okta for authentication
+    await this.oktaAuth.signInWithRedirect({
+      originalUri: '/owner/login/callback?action=register'
+    });
+  }
+
+  /**
+   * Complete registration after Okta authentication
+   */
+  completeRegistration(): Observable<OwnerProfile | null> {
+    const pendingData = sessionStorage.getItem(STORAGE_KEYS.pendingOwnerRegistration);
+    
+    if (!pendingData) {
+      return of(null);
+    }
+
+    const payload: OwnerRegisterRequest = JSON.parse(pendingData);
+    
+    return this.createOwnerProfile(payload).pipe(
+      tap(() => {
+        // Clear pending registration data
+        sessionStorage.removeItem(STORAGE_KEYS.pendingOwnerRegistration);
+      }),
+      catchError((error) => {
+        sessionStorage.removeItem(STORAGE_KEYS.pendingOwnerRegistration);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Check if there's pending registration data
+   */
+  hasPendingRegistration(): boolean {
+    return !!sessionStorage.getItem(STORAGE_KEYS.pendingOwnerRegistration);
+  }
+
+  /**
+   * Sync owner state with Okta authentication
+   */
+  syncWithOktaAuth(): Observable<OwnerProfile | null> {
+    return from(this.oktaAuth.getAccessToken()).pipe(
+      switchMap((token) => {
+        if (!token) {
+          return of(null);
+        }
+        
+        // Set the Okta token
+        this.authState.update((state) => ({
+          ...state,
+          accessToken: token
+        }));
+
+        // Try to load existing owner profile
+        return this.loadProfile().pipe(
+          tap((owner) => {
+            this.personaService.setPersona('owner');
+          }),
+          catchError(() => of(null))
+        );
+      })
+    );
+  }
+
+  /**
+   * Create owner profile in backend (used after Okta auth)
+   */
+  private createOwnerProfile(payload: OwnerRegisterRequest): Observable<OwnerProfile> {
     // Map to the backend's expected format (CreateOwnerDto)
-    // Note: If cityId starts with hardcoded prefix, send null instead
     const isHardcodedCity = payload.cityId && !payload.cityId.includes('-') === false && 
       ['nyc', 'la', 'chi', 'hou', 'phx', 'phi', 'sa', 'sd', 'dal', 'sj', 'aus', 'jax', 
        'fw', 'col', 'cha', 'ind', 'sf', 'sea', 'den', 'dc', 'bos', 'mia', 'atl', 'lv', 
@@ -63,18 +165,21 @@ export class OwnerAuthService implements OnDestroy {
       .post<OwnerProfile>(`${this.baseUrl}/api/Owners`, createOwnerDto)
       .pipe(
         tap((owner) => {
-          // Since backend doesn't have auth, simulate a logged-in session
-          this.authState.set({
-            accessToken: 'demo-token-' + owner.id,
-            refreshToken: 'demo-refresh-' + owner.id,
-            expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-            owner
-          });
-          sessionStorage.setItem(STORAGE_KEYS.ownerRefreshToken, 'demo-refresh-' + owner.id);
-          this.ownerState.setOwner(owner);
+          this.setOwner(owner);
           this.personaService.setPersona('owner');
         })
       );
+  }
+
+  /**
+   * @deprecated Use initiateRegistration() for Okta-based registration
+   * Legacy register method - now redirects through Okta
+   */
+  register(payload: OwnerRegisterRequest) {
+    // For backward compatibility, initiate Okta registration
+    return from(this.initiateRegistration(payload)).pipe(
+      map(() => null as unknown as OwnerProfile)
+    );
   }
 
   login(credentials: OwnerLoginRequest) {
@@ -99,15 +204,9 @@ export class OwnerAuthService implements OnDestroy {
       .pipe(tap((response) => this.handleAuthSuccess(response)));
   }
 
-  logout() {
-    const refreshToken = this.authState().refreshToken;
-    const request$ = refreshToken
-      ? this.http.post<void>(`${this.baseUrl}/api/auth/revoke`, {
-          refreshToken
-        })
-      : of(void 0);
-
-    return request$.pipe(finalize(() => this.clearAuthState()));
+  async logout(): Promise<void> {
+    this.clearAuthState();
+    await this.oktaAuth.signOut();
   }
 
   loadProfile() {

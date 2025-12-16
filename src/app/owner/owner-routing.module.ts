@@ -6,12 +6,17 @@ import { OwnerFleetsComponent } from './pages/owner-fleets/owner-fleets.componen
 import { OwnerProfileComponent } from './pages/owner-profile/owner-profile.component';
 import { OwnerLoginComponent } from './pages/owner-login/owner-login.component';
 import { OwnerRegisterComponent } from './pages/owner-register/owner-register.component';
+import { OwnerCallbackComponent } from './pages/owner-callback/owner-callback.component';
 import { OwnerGuard } from '../core/guards/owner.guard';
 
 const routes: Routes = [
   {
     path: 'login',
     component: OwnerLoginComponent
+  },
+  {
+    path: 'login/callback',
+    component: OwnerCallbackComponent
   },
   {
     path: 'register',
@@ -36,6 +41,7 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class OwnerRoutingModule {}
+
 
 
 

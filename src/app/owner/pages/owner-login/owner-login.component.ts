@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { OwnerAuthService } from '../../../core/services/owner-auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -10,42 +9,30 @@ import { ToastService } from '../../../core/services/toast.service';
   styleUrls: ['./owner-login.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class OwnerLoginComponent {
-  hidePassword = true;
+export class OwnerLoginComponent implements OnInit {
   isLoading = signal(false);
 
-  loginForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required],
-    rememberMe: [false]
-  });
-
   constructor(
-    private readonly fb: FormBuilder,
     private readonly ownerAuth: OwnerAuthService,
     private readonly router: Router,
     private readonly toast: ToastService
   ) {}
 
-  onSubmit() {
-    if (this.loginForm.invalid || this.isLoading()) {
-      return;
+  async ngOnInit(): Promise<void> {
+    // Check if already authenticated
+    const isAuth = await this.ownerAuth.isOktaAuthenticated();
+    if (isAuth) {
+      this.router.navigate(['/owner/dashboard']);
     }
+  }
 
+  async loginWithOkta(): Promise<void> {
     this.isLoading.set(true);
-    const { email, password, rememberMe } = this.loginForm.value;
-
-    this.ownerAuth.login({ email: email!, password: password!, rememberMe: rememberMe ?? false })
-      .subscribe({
-        next: () => {
-          this.toast.success('Login successful');
-          this.router.navigate(['/owner/dashboard']);
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          const message = err?.error?.message || 'Invalid email or password';
-          this.toast.error(message);
-        }
-      });
+    try {
+      await this.ownerAuth.loginWithOkta('/owner/login/callback');
+    } catch (err) {
+      this.isLoading.set(false);
+      this.toast.error('Failed to redirect to login. Please try again.');
+    }
   }
 }

@@ -8,6 +8,8 @@ import { OwnerFleetsComponent } from './pages/owner-fleets/owner-fleets.componen
 import { OwnerProfileComponent } from './pages/owner-profile/owner-profile.component';
 import { OwnerLoginComponent } from './pages/owner-login/owner-login.component';
 import { OwnerRegisterComponent } from './pages/owner-register/owner-register.component';
+import { OwnerCallbackComponent } from './pages/owner-callback/owner-callback.component';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @NgModule({
   declarations: [
@@ -16,11 +18,13 @@ import { OwnerRegisterComponent } from './pages/owner-register/owner-register.co
     OwnerFleetsComponent,
     OwnerProfileComponent,
     OwnerLoginComponent,
-    OwnerRegisterComponent
+    OwnerRegisterComponent,
+    OwnerCallbackComponent
   ],
-  imports: [CommonModule, SharedModule, OwnerRoutingModule]
+  imports: [CommonModule, SharedModule, OwnerRoutingModule, MatProgressSpinnerModule]
 })
 export class OwnerModule {}
+
 
 
 
