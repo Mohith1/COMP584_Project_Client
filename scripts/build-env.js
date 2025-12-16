@@ -10,17 +10,40 @@ const path = require('path');
 
 const envPath = path.join(__dirname, '../src/environments/environment.ts');
 
+// Helper function to ensure URL uses https
+function ensureHttps(url) {
+  if (!url || url.includes('{your')) return url; // Skip placeholders
+  // Remove any existing protocol and add https
+  return 'https://' + url.replace(/^https?:\/\//, '');
+}
+
 // Read environment variables from process.env (set by Vercel)
 const apiUrl = process.env.NG_APP_API_URL || process.env.API_URL || 'https://fleetmanagement-api-production.up.railway.app';
-const oktaDomain = process.env.NG_APP_OKTA_DOMAIN || process.env.OKTA_DOMAIN || '{yourOktaDomain}';
+let oktaDomain = process.env.NG_APP_OKTA_DOMAIN || process.env.OKTA_DOMAIN || '{yourOktaDomain}';
 const oktaClientId = process.env.NG_APP_OKTA_CLIENT_ID || process.env.OKTA_CLIENT_ID || '{yourOktaClientId}';
 const oktaAudience = process.env.NG_APP_OKTA_AUDIENCE || process.env.OKTA_AUDIENCE || 'api://default';
 
+// Ensure domain uses https
+oktaDomain = ensureHttps(oktaDomain);
+
 // Build issuer from domain if not explicitly provided
-const oktaIssuer = process.env.NG_APP_OKTA_ISSUER || process.env.OKTA_ISSUER || `${oktaDomain}/oauth2/default`;
+// For Auth0: issuer is just the domain (e.g., https://dev-xxx.auth0.com/)
+// For Okta: issuer includes /oauth2/default
+let oktaIssuer = process.env.NG_APP_OKTA_ISSUER || process.env.OKTA_ISSUER;
+if (!oktaIssuer) {
+  // Auto-detect Auth0 vs Okta based on domain
+  if (oktaDomain.includes('auth0.com')) {
+    // Auth0 issuer is just the domain with trailing slash
+    oktaIssuer = oktaDomain.endsWith('/') ? oktaDomain : oktaDomain + '/';
+  } else {
+    // Okta issuer includes /oauth2/default
+    oktaIssuer = `${oktaDomain}/oauth2/default`;
+  }
+} else {
+  oktaIssuer = ensureHttps(oktaIssuer);
+}
 
 // Support both user and owner callback URIs
-// The redirect URI should be the base URL - Okta will handle the callback path
 const baseRedirectUri = process.env.NG_APP_OKTA_REDIRECT_URI || process.env.OKTA_REDIRECT_URI || 'https://your-vercel-app.vercel.app/owner/login/callback';
 
 // Generate environment.ts content
