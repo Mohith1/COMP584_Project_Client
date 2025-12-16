@@ -10,52 +10,33 @@ const path = require('path');
 
 const envPath = path.join(__dirname, '../src/environments/environment.ts');
 
-// Helper function to ensure URL uses https
-function ensureHttps(url) {
+// Helper function to extract domain without protocol
+function extractDomain(url) {
   if (!url || url.includes('{your')) return url; // Skip placeholders
-  // Remove any existing protocol and add https
-  return 'https://' + url.replace(/^https?:\/\//, '');
+  // Remove protocol (http:// or https://) and trailing slashes
+  return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 }
 
 // Read environment variables from process.env (set by Vercel)
 const apiUrl = process.env.NG_APP_API_URL || process.env.API_URL || 'https://fleetmanagement-api-production.up.railway.app';
-let oktaDomain = process.env.NG_APP_OKTA_DOMAIN || process.env.OKTA_DOMAIN || '{yourOktaDomain}';
-const oktaClientId = process.env.NG_APP_OKTA_CLIENT_ID || process.env.OKTA_CLIENT_ID || '{yourOktaClientId}';
-const oktaAudience = process.env.NG_APP_OKTA_AUDIENCE || process.env.OKTA_AUDIENCE || 'api://default';
 
-// Ensure domain uses https
-oktaDomain = ensureHttps(oktaDomain);
+// Auth0 configuration (domain should be without protocol for Auth0 SDK)
+let auth0Domain = process.env.NG_APP_OKTA_DOMAIN || process.env.AUTH0_DOMAIN || '{yourAuth0Domain}';
+auth0Domain = extractDomain(auth0Domain);
 
-// Build issuer from domain if not explicitly provided
-// For Auth0: issuer is just the domain (e.g., https://dev-xxx.auth0.com/)
-// For Okta: issuer includes /oauth2/default
-let oktaIssuer = process.env.NG_APP_OKTA_ISSUER || process.env.OKTA_ISSUER;
-if (!oktaIssuer) {
-  // Auto-detect Auth0 vs Okta based on domain
-  if (oktaDomain.includes('auth0.com')) {
-    // Auth0 issuer is just the domain with trailing slash
-    oktaIssuer = oktaDomain.endsWith('/') ? oktaDomain : oktaDomain + '/';
-  } else {
-    // Okta issuer includes /oauth2/default
-    oktaIssuer = `${oktaDomain}/oauth2/default`;
-  }
-} else {
-  oktaIssuer = ensureHttps(oktaIssuer);
-}
-
-// Support both user and owner callback URIs
-const baseRedirectUri = process.env.NG_APP_OKTA_REDIRECT_URI || process.env.OKTA_REDIRECT_URI || 'https://your-vercel-app.vercel.app/owner/login/callback';
+const auth0ClientId = process.env.NG_APP_OKTA_CLIENT_ID || process.env.AUTH0_CLIENT_ID || '{yourAuth0ClientId}';
+const auth0Audience = process.env.NG_APP_OKTA_AUDIENCE || process.env.AUTH0_AUDIENCE || 'api://default';
+const redirectUri = process.env.NG_APP_OKTA_REDIRECT_URI || process.env.AUTH0_REDIRECT_URI || 'https://your-vercel-app.vercel.app/owner/login/callback';
 
 // Generate environment.ts content
 const envContent = `export const environment = {
   production: true,
   apiUrl: '${apiUrl}',
-  okta: {
-    domain: '${oktaDomain}',
-    clientId: '${oktaClientId}',
-    issuer: '${oktaIssuer}',
-    audience: '${oktaAudience}',
-    redirectUri: '${baseRedirectUri}'
+  auth0: {
+    domain: '${auth0Domain}',
+    clientId: '${auth0ClientId}',
+    audience: '${auth0Audience}',
+    redirectUri: '${redirectUri}'
   }
 } as const;
 `;
@@ -65,9 +46,9 @@ try {
   fs.writeFileSync(envPath, envContent, 'utf8');
   console.log('✅ Environment file updated successfully!');
   console.log('   API URL:', apiUrl);
-  console.log('   Okta Domain:', oktaDomain);
-  console.log('   Okta Issuer:', oktaIssuer);
-  console.log('   Redirect URI:', baseRedirectUri);
+  console.log('   Auth0 Domain:', auth0Domain);
+  console.log('   Auth0 Client ID:', auth0ClientId);
+  console.log('   Redirect URI:', redirectUri);
 } catch (error) {
   console.error('❌ Error updating environment file:', error);
   process.exit(1);

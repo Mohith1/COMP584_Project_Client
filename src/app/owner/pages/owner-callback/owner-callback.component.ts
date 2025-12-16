@@ -49,8 +49,8 @@ export class OwnerCallbackComponent implements OnInit {
       const action = this.route.snapshot.queryParams['action'];
       const isRegistration = action === 'register' || this.ownerAuth.hasPendingRegistration();
 
-      // Wait for Okta to process the callback
-      const isAuthenticated = await this.ownerAuth.isOktaAuthenticated();
+      // Wait for Auth0 to process the callback
+      const isAuthenticated = await this.ownerAuth.isAuth0Authenticated();
 
       if (!isAuthenticated) {
         this.toast.error('Authentication failed. Please try again.');
@@ -90,7 +90,7 @@ export class OwnerCallbackComponent implements OnInit {
 
   private syncAndNavigate(): void {
     this.message = 'Loading your profile...';
-    this.ownerAuth.syncWithOktaAuth().subscribe({
+    this.ownerAuth.syncWithAuth0().subscribe({
       next: (owner) => {
         if (owner) {
           this.toast.success('Welcome back!');

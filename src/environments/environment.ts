@@ -1,10 +1,9 @@
 export const environment = {
   production: true,
   apiUrl: 'https://fleetmanagement-api-production.up.railway.app',
-  okta: {
-    domain: 'https://{yourOktaDomain}',
-    clientId: '{yourOktaClientId}',
-    issuer: 'https://{yourOktaDomain}/oauth2/default',
+  auth0: {
+    domain: '{yourAuth0Domain}',
+    clientId: '{yourAuth0ClientId}',
     audience: 'api://default',
     redirectUri: 'https://your-production-host/owner/login/callback'
   }

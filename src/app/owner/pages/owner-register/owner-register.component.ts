@@ -126,7 +126,7 @@ export class OwnerRegisterComponent implements OnInit {
     return null;
   }
 
-  async onSubmit(): Promise<void> {
+  onSubmit(): void {
     if (this.registerForm.invalid || this.isLoading()) {
       // Mark all fields as touched to show validation errors
       this.registerForm.markAllAsTouched();
@@ -147,8 +147,8 @@ export class OwnerRegisterComponent implements OnInit {
     };
 
     try {
-      // This will store the registration data and redirect to Okta
-      await this.ownerAuth.initiateRegistration(payload);
+      // This will store the registration data and redirect to Auth0
+      this.ownerAuth.initiateRegistration(payload);
       // The page will redirect, so we don't need to handle success here
     } catch (err: unknown) {
       this.isLoading.set(false);

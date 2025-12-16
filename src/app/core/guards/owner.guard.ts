@@ -24,11 +24,11 @@ export class OwnerGuard implements CanActivate, CanActivateChild {
     _route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-    return from(this.ownerAuth.isOktaAuthenticated()).pipe(
+    return from(this.ownerAuth.isAuth0Authenticated()).pipe(
       switchMap((isAuth) => {
         if (!isAuth) {
-          // Not authenticated with Okta, redirect to login
-          this.ownerAuth.loginWithOkta(state.url);
+          // Not authenticated with Auth0, redirect to login
+          this.ownerAuth.loginWithAuth0(state.url);
           return of(false);
         }
 
@@ -39,7 +39,7 @@ export class OwnerGuard implements CanActivate, CanActivateChild {
         }
 
         // Try to sync/load owner profile from backend
-        return this.ownerAuth.syncWithOktaAuth().pipe(
+        return this.ownerAuth.syncWithAuth0().pipe(
           map((owner) => {
             if (owner) {
               this.personaService.setPersona('owner');
@@ -52,7 +52,7 @@ export class OwnerGuard implements CanActivate, CanActivateChild {
         );
       }),
       catchError(() => {
-        this.ownerAuth.loginWithOkta(state.url);
+        this.ownerAuth.loginWithAuth0(state.url);
         return of(false);
       })
     );

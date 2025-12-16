@@ -20,9 +20,9 @@ export class OwnerShellComponent {
     private readonly router: Router
   ) {}
 
-  async logout(): Promise<void> {
-    await this.ownerAuth.logout();
-    this.router.navigate(['/owner/login']);
+  logout(): void {
+    this.ownerAuth.logout();
+    // Auth0 will handle the redirect after logout
   }
 }
 

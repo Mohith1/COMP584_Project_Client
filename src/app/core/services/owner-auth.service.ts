@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable, OnDestroy, computed, signal } from '@angular/core';
-import { Observable, Subscription, of, timer, from } from 'rxjs';
-import { tap, finalize, map, switchMap, catchError } from 'rxjs/operators';
-import { OKTA_AUTH } from '@okta/okta-angular';
-import { OktaAuth } from '@okta/okta-auth-js';
+import { Injectable, OnDestroy, computed, signal } from '@angular/core';
+import { Observable, Subscription, of, timer, firstValueFrom } from 'rxjs';
+import { tap, map, switchMap, catchError, take } from 'rxjs/operators';
+import { AuthService } from '@auth0/auth0-angular';
 import { environment } from '../../../environments/environment';
 import {
   OwnerAuthResponse,
@@ -40,50 +39,53 @@ export class OwnerAuthService implements OnDestroy {
     private readonly http: HttpClient,
     private readonly ownerState: OwnerStateService,
     private readonly personaService: PersonaService,
-    @Inject(OKTA_AUTH) private readonly oktaAuth: OktaAuth
+    private readonly auth0: AuthService
   ) {}
 
   /**
-   * Check if user is authenticated with Okta
+   * Check if user is authenticated with Auth0
    */
-  isOktaAuthenticated(): Promise<boolean> {
-    return this.oktaAuth.isAuthenticated();
+  async isAuth0Authenticated(): Promise<boolean> {
+    return firstValueFrom(this.auth0.isAuthenticated$.pipe(take(1)));
   }
 
   /**
-   * Get Okta access token
+   * Get Auth0 access token
    */
-  async getOktaAccessToken(): Promise<string | undefined> {
-    return this.oktaAuth.getAccessToken();
+  getAuth0AccessToken(): Observable<string> {
+    return this.auth0.getAccessTokenSilently();
   }
 
   /**
-   * Initiate Okta login redirect
+   * Initiate Auth0 login redirect
    */
-  async loginWithOkta(returnTo?: string): Promise<void> {
-    await this.oktaAuth.signInWithRedirect({
-      originalUri: returnTo ?? '/owner/dashboard'
+  loginWithAuth0(returnTo?: string): void {
+    this.auth0.loginWithRedirect({
+      appState: { target: returnTo ?? '/owner/dashboard' }
     });
   }
 
   /**
-   * Store pending registration data and redirect to Okta for authentication
+   * Store pending registration data and redirect to Auth0 for authentication
    */
-  async initiateRegistration(payload: OwnerRegisterRequest): Promise<void> {
-    // Store the registration data to complete after Okta auth
+  initiateRegistration(payload: OwnerRegisterRequest): void {
+    // Store the registration data to complete after Auth0 auth
     sessionStorage.setItem(
       STORAGE_KEYS.pendingOwnerRegistration,
       JSON.stringify(payload)
     );
     
-    // Redirect to Okta for authentication
-    await this.oktaAuth.signInWithRedirect({
-      originalUri: '/owner/login/callback?action=register'
+    // Redirect to Auth0 for authentication with signup hint
+    this.auth0.loginWithRedirect({
+      appState: { target: '/owner/login/callback?action=register' },
+      authorizationParams: {
+        screen_hint: 'signup'
+      }
     });
   }
 
   /**
-   * Complete registration after Okta authentication
+   * Complete registration after Auth0 authentication
    */
   completeRegistration(): Observable<OwnerProfile | null> {
     const pendingData = sessionStorage.getItem(STORAGE_KEYS.pendingOwnerRegistration);
@@ -114,32 +116,35 @@ export class OwnerAuthService implements OnDestroy {
   }
 
   /**
-   * Sync owner state with Okta authentication
+   * Sync owner state with Auth0 authentication
    */
-  syncWithOktaAuth(): Observable<OwnerProfile | null> {
-    const token = this.oktaAuth.getAccessToken();
-    
-    if (!token) {
-      return of(null);
-    }
-    
-    // Set the Okta token
-    this.authState.update((state) => ({
-      ...state,
-      accessToken: token
-    }));
+  syncWithAuth0(): Observable<OwnerProfile | null> {
+    return this.auth0.getAccessTokenSilently().pipe(
+      switchMap((token) => {
+        if (!token) {
+          return of(null);
+        }
+        
+        // Set the Auth0 token
+        this.authState.update((state) => ({
+          ...state,
+          accessToken: token
+        }));
 
-    // Try to load existing owner profile
-    return this.loadProfile().pipe(
-      tap(() => {
-        this.personaService.setPersona('owner');
+        // Try to load existing owner profile
+        return this.loadProfile().pipe(
+          tap(() => {
+            this.personaService.setPersona('owner');
+          }),
+          catchError(() => of(null))
+        );
       }),
       catchError(() => of(null))
     );
   }
 
   /**
-   * Create owner profile in backend (used after Okta auth)
+   * Create owner profile in backend (used after Auth0 auth)
    */
   private createOwnerProfile(payload: OwnerRegisterRequest): Observable<OwnerProfile> {
     // Map to the backend's expected format (CreateOwnerDto)
@@ -170,14 +175,12 @@ export class OwnerAuthService implements OnDestroy {
   }
 
   /**
-   * @deprecated Use initiateRegistration() for Okta-based registration
-   * Legacy register method - now redirects through Okta
+   * @deprecated Use initiateRegistration() for Auth0-based registration
+   * Legacy register method - now redirects through Auth0
    */
   register(payload: OwnerRegisterRequest) {
-    // For backward compatibility, initiate Okta registration
-    return from(this.initiateRegistration(payload)).pipe(
-      map(() => null as unknown as OwnerProfile)
-    );
+    this.initiateRegistration(payload);
+    return of(null as unknown as OwnerProfile);
   }
 
   login(credentials: OwnerLoginRequest) {
@@ -202,9 +205,13 @@ export class OwnerAuthService implements OnDestroy {
       .pipe(tap((response) => this.handleAuthSuccess(response)));
   }
 
-  async logout(): Promise<void> {
+  logout(): void {
     this.clearAuthState();
-    await this.oktaAuth.signOut();
+    this.auth0.logout({
+      logoutParams: {
+        returnTo: window.location.origin + '/owner/login'
+      }
+    });
   }
 
   loadProfile() {
@@ -290,4 +297,3 @@ export class OwnerAuthService implements OnDestroy {
     this.cancelRefreshSchedule();
   }
 }
-

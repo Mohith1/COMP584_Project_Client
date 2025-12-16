@@ -1,34 +1,27 @@
 import { NgModule, Optional, SkipSelf } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { OktaAuthModule, OKTA_CONFIG } from '@okta/okta-angular';
-import { OktaAuth } from '@okta/okta-auth-js';
+import { AuthModule } from '@auth0/auth0-angular';
 
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { HttpErrorInterceptor } from './interceptors/http-error.interceptor';
 import { environment } from '../../environments/environment';
 
-const oktaAuth = new OktaAuth({
-  issuer: environment.okta.issuer,
-  clientId: environment.okta.clientId,
-  redirectUri: environment.okta.redirectUri,
-  scopes: ['openid', 'profile', 'email'],
-  pkce: true, // Required for Auth0 SPAs
-  tokenManager: {
-    storage: 'sessionStorage'
-  },
-  // Include audience for API access (Auth0 requirement)
-  ...(environment.okta.audience && {
-    additionalParams: {
-      audience: environment.okta.audience
-    }
-  })
-});
-
 @NgModule({
-  imports: [CommonModule, HttpClientModule, OktaAuthModule],
+  imports: [
+    CommonModule,
+    HttpClientModule,
+    AuthModule.forRoot({
+      domain: environment.auth0.domain,
+      clientId: environment.auth0.clientId,
+      authorizationParams: {
+        redirect_uri: environment.auth0.redirectUri,
+        audience: environment.auth0.audience
+      },
+      cacheLocation: 'localstorage'
+    })
+  ],
   providers: [
-    { provide: OKTA_CONFIG, useValue: { oktaAuth } },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: HttpErrorInterceptor, multi: true }
   ]

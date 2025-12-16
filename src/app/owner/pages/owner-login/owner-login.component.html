@@ -19,12 +19,12 @@
           mat-raised-button 
           color="primary" 
           class="okta-button" 
-          (click)="loginWithOkta()"
+          (click)="loginWithAuth0()"
           [disabled]="isLoading()">
           <mat-spinner *ngIf="isLoading()" diameter="20"></mat-spinner>
           <ng-container *ngIf="!isLoading()">
             <mat-icon>login</mat-icon>
-            <span>Sign in with Okta</span>
+            <span>Sign in</span>
           </ng-container>
         </button>
       </div>

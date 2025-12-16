@@ -20,16 +20,16 @@ export class OwnerLoginComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     // Check if already authenticated
-    const isAuth = await this.ownerAuth.isOktaAuthenticated();
+    const isAuth = await this.ownerAuth.isAuth0Authenticated();
     if (isAuth) {
       this.router.navigate(['/owner/dashboard']);
     }
   }
 
-  async loginWithOkta(): Promise<void> {
+  loginWithAuth0(): void {
     this.isLoading.set(true);
     try {
-      await this.ownerAuth.loginWithOkta('/owner/login/callback');
+      this.ownerAuth.loginWithAuth0('/owner/login/callback');
     } catch (err) {
       this.isLoading.set(false);
       this.toast.error('Failed to redirect to login. Please try again.');
