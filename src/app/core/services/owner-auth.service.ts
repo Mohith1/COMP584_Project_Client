@@ -42,12 +42,22 @@ export class OwnerAuthService implements OnDestroy {
 
   register(payload: OwnerRegisterRequest) {
     // Map to the backend's expected format (CreateOwnerDto)
-    const createOwnerDto = {
+    // Note: If cityId starts with hardcoded prefix, send null instead
+    const isHardcodedCity = payload.cityId && !payload.cityId.includes('-') === false && 
+      ['nyc', 'la', 'chi', 'hou', 'phx', 'phi', 'sa', 'sd', 'dal', 'sj', 'aus', 'jax', 
+       'fw', 'col', 'cha', 'ind', 'sf', 'sea', 'den', 'dc', 'bos', 'mia', 'atl', 'lv', 
+       'det', 'min', 'por', 'nas', 'orl', 'bal'].some(prefix => payload.cityId.startsWith(prefix));
+    
+    const createOwnerDto: Record<string, unknown> = {
       companyName: payload.companyName,
       contactEmail: payload.email,
-      contactPhone: payload.phoneNumber || null,
-      cityId: payload.cityId
+      contactPhone: payload.phoneNumber || null
     };
+    
+    // Only include cityId if it's a valid GUID from the API
+    if (payload.cityId && !isHardcodedCity) {
+      createOwnerDto['cityId'] = payload.cityId;
+    }
 
     return this.http
       .post<OwnerProfile>(`${this.baseUrl}/api/Owners`, createOwnerDto)
