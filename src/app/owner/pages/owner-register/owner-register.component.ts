@@ -51,7 +51,8 @@ export class OwnerRegisterComponent implements OnInit {
   isLoading = signal(false);
   
   countries = signal<Country[]>([]);
-  cities = signal<City[]>(US_METRO_CITIES);  // Initialize with US cities as default
+  cities = signal<City[]>([]);  // Start empty, load from API first
+  citiesLoading = signal(true);
   
   registerForm = this.fb.group({
     companyName: ['', [Validators.required, Validators.maxLength(128)]],
@@ -84,18 +85,22 @@ export class OwnerRegisterComponent implements OnInit {
   }
 
   private loadCities(countryId?: string): void {
+    this.citiesLoading.set(true);
     this.cityService.getCities(countryId).subscribe({
       next: (cities) => {
-        // If API returns empty or undefined, use hardcoded US metro cities
-        if (!cities || cities.length === 0) {
-          this.cities.set(US_METRO_CITIES);
-        } else {
+        // Use API cities if available, otherwise fallback to hardcoded
+        if (cities && cities.length > 0) {
           this.cities.set(cities);
+        } else {
+          // Only use hardcoded cities if API returns empty
+          this.cities.set(US_METRO_CITIES);
         }
+        this.citiesLoading.set(false);
       },
       error: () => {
         // On error, fallback to hardcoded cities
         this.cities.set(US_METRO_CITIES);
+        this.citiesLoading.set(false);
       }
     });
   }
