@@ -36,11 +36,8 @@ export class CityService {
   constructor(private readonly http: HttpClient) {}
 
   getCountries(): Observable<Country[]> {
-    return this.http.get<Country[]>(`${this.baseUrl}/api/countries`).pipe(
-      catchError((error) => {
-        console.error('Error fetching countries:', error);
-        return of([]);
-      })
+    return this.http.get<Country[]>(`${this.baseUrl}/api/Countries`).pipe(
+      catchError(() => of([]))
     );
   }
 
@@ -52,15 +49,10 @@ export class CityService {
     if (search) {
       params = params.set('search', search);
     }
-    // Increase pageSize to get more cities
-    params = params.set('pageSize', '100');
 
-    return this.http.get<CitiesResponse>(`${this.baseUrl}/api/cities`, { params }).pipe(
+    return this.http.get<CitiesResponse>(`${this.baseUrl}/api/Cities`, { params }).pipe(
       map(response => response.items),
-      catchError((error) => {
-        console.error('Error fetching cities:', error);
-        return of([]);
-      })
+      catchError(() => of([]))
     );
   }
 

@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { OwnerAuthService } from '../../../core/services/owner-auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-owner-login',
@@ -10,35 +11,41 @@ import { OwnerAuthService } from '../../../core/services/owner-auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OwnerLoginComponent {
-  showPassword = false;
+  hidePassword = true;
+  isLoading = signal(false);
 
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
+    password: ['', Validators.required],
+    rememberMe: [false]
   });
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly ownerAuth: OwnerAuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly toast: ToastService
   ) {}
 
-  togglePasswordVisibility(): void {
-    this.showPassword = !this.showPassword;
-  }
-
-  submit() {
-    if (this.loginForm.invalid) {
+  onSubmit() {
+    if (this.loginForm.invalid || this.isLoading()) {
       return;
     }
-    const formValue = this.loginForm.value;
-    const credentials = {
-      email: formValue.email ?? '',
-      password: formValue.password ?? ''
-    };
-    this.ownerAuth.login(credentials).subscribe(() => {
-      this.router.navigate(['/owner/dashboard']);
-    });
+
+    this.isLoading.set(true);
+    const { email, password, rememberMe } = this.loginForm.value;
+
+    this.ownerAuth.login({ email: email!, password: password!, rememberMe: rememberMe ?? false })
+      .subscribe({
+        next: () => {
+          this.toast.success('Login successful');
+          this.router.navigate(['/owner/dashboard']);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          const message = err?.error?.message || 'Invalid email or password';
+          this.toast.error(message);
+        }
+      });
   }
 }
-

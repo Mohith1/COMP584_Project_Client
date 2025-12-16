@@ -1,60 +1,41 @@
-<app-page-header
-  title="Owner Login"
-  subtitle="Sign in to access your fleet management dashboard."
-  [showPrimary]="false"
-></app-page-header>
+<section class="auth-container">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title>Fleet Owner Login</mat-card-title>
+      <mat-card-subtitle>Sign in to manage your fleet</mat-card-subtitle>
+    </mat-card-header>
 
-<mat-card class="login-card">
-  <mat-card-content>
-    <form [formGroup]="loginForm" (ngSubmit)="submit()">
-      <mat-form-field appearance="outline">
-        <mat-label>Email</mat-label>
-        <input matInput type="email" formControlName="email" placeholder="Enter your email" />
-        <mat-icon matPrefix>email</mat-icon>
-        <mat-error *ngIf="loginForm.get('email')?.hasError('required')">
-          Email is required.
-        </mat-error>
-        <mat-error *ngIf="loginForm.get('email')?.hasError('email')">
-          Please enter a valid email address.
-        </mat-error>
-      </mat-form-field>
+    <mat-card-content>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="Enter your email">
+          <mat-icon matPrefix>email</mat-icon>
+          <mat-error *ngIf="loginForm.get('email')?.hasError('required')">Email is required</mat-error>
+          <mat-error *ngIf="loginForm.get('email')?.hasError('email')">Enter a valid email</mat-error>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Password</mat-label>
-        <input 
-          matInput 
-          [type]="showPassword ? 'text' : 'password'" 
-          formControlName="password" 
-          placeholder="Enter your password"
-        />
-        <mat-icon matPrefix>lock</mat-icon>
-        <button 
-          mat-icon-button 
-          matSuffix 
-          type="button"
-          (click)="togglePasswordVisibility()"
-          [attr.aria-label]="'Toggle password visibility'"
-        >
-          <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" placeholder="Enter your password">
+          <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error *ngIf="loginForm.get('password')?.hasError('required')">Password is required</mat-error>
+        </mat-form-field>
+
+        <mat-checkbox formControlName="rememberMe" color="primary">Remember me</mat-checkbox>
+
+        <button mat-raised-button color="primary" type="submit" class="submit-button" [disabled]="loginForm.invalid || isLoading()">
+          <mat-spinner *ngIf="isLoading()" diameter="20"></mat-spinner>
+          <span *ngIf="!isLoading()">Sign In</span>
         </button>
-        <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
-          Password is required.
-        </mat-error>
-      </mat-form-field>
+      </form>
+    </mat-card-content>
 
-      <button 
-        mat-raised-button 
-        color="primary" 
-        type="submit" 
-        [disabled]="loginForm.invalid"
-        class="submit-button"
-      >
-        Sign In
-      </button>
-
-      <div class="signup-link">
-        <p>Don't have an account? <a routerLink="/owner/register">Sign Up</a></p>
-      </div>
-    </form>
-  </mat-card-content>
-</mat-card>
+    <div class="register-link">
+      <p>Don't have an account? <a routerLink="/owner/register">Register here</a></p>
+    </div>
+  </mat-card>
+</section>

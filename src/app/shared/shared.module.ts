@@ -22,6 +22,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { FleetListComponent } from './components/fleet-list/fleet-list.component';
 import { VehicleTableComponent } from './components/vehicle-table/vehicle-table.component';
@@ -48,7 +49,8 @@ const MATERIAL_MODULES = [
   MatProgressSpinnerModule,
   MatMenuModule,
   MatDividerModule,
-  MatTooltipModule
+  MatTooltipModule,
+  MatCheckboxModule
 ];
 
 const COMPONENTS = [
@@ -80,6 +82,7 @@ const COMPONENTS = [
   ]
 })
 export class SharedModule {}
+
 
 
 

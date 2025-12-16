@@ -155,3 +155,4 @@ If the Okta SDK doesn't work well with Auth0, you can migrate to the official Au
 - [ ] Refresh tokens enabled
 - [ ] Scopes configured (openid, profile, email + custom scopes)
 
+
