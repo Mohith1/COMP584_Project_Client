@@ -41,9 +41,30 @@ export class OwnerAuthService implements OnDestroy {
   ) {}
 
   register(payload: OwnerRegisterRequest) {
+    // Map to the backend's expected format (CreateOwnerDto)
+    const createOwnerDto = {
+      companyName: payload.companyName,
+      contactEmail: payload.email,
+      contactPhone: payload.phoneNumber || null,
+      cityId: payload.cityId
+    };
+
     return this.http
-      .post<OwnerAuthResponse>(`${this.baseUrl}/api/auth/register-owner`, payload)
-      .pipe(tap((response) => this.handleAuthSuccess(response)));
+      .post<OwnerProfile>(`${this.baseUrl}/api/Owners`, createOwnerDto)
+      .pipe(
+        tap((owner) => {
+          // Since backend doesn't have auth, simulate a logged-in session
+          this.authState.set({
+            accessToken: 'demo-token-' + owner.id,
+            refreshToken: 'demo-refresh-' + owner.id,
+            expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+            owner
+          });
+          sessionStorage.setItem(STORAGE_KEYS.ownerRefreshToken, 'demo-refresh-' + owner.id);
+          this.ownerState.setOwner(owner);
+          this.personaService.setPersona('owner');
+        })
+      );
   }
 
   login(credentials: OwnerLoginRequest) {
