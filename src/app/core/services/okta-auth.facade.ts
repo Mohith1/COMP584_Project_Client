@@ -71,22 +71,22 @@ export class OktaAuthFacade {
       if (!user.sub) {
         console.error('Auth0 user missing sub identifier');
         return;
-      }
+    }
 
-      const profile: OktaProfile = {
+    const profile: OktaProfile = {
         sub: user.sub,
         name: user.name,
         email: user.email,
         email_verified: user.email_verified,
         picture: user.picture,
-        ownerId:
+      ownerId:
           (user['ownerId'] as string | undefined) ??
           (user['custom:ownerId'] as string | undefined) ??
           (user['https://schemas.fleet.com/ownerId'] as string | undefined),
         roles: this.extractRoles(user)
-      };
+    };
 
-      this.userState.setProfile(profile);
+    this.userState.setProfile(profile);
     });
 
     // Get access token

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '@auth0/auth0-angular';
-import { filter, take } from 'rxjs/operators';
+import { filter, take, switchMap } from 'rxjs/operators';
 import { OwnerAuthService } from '../../../core/services/owner-auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -26,10 +26,29 @@ export class OwnerLoginComponent implements OnInit {
     // This will handle the callback when Auth0 redirects back with a code
     this.auth0.isAuthenticated$.pipe(
       filter((isAuth) => isAuth),
-      take(1)
-    ).subscribe(() => {
-      console.log('✅ Auth0 authenticated, redirecting to dashboard...');
-      this.router.navigate(['/owner/dashboard']);
+      take(1),
+      // After Auth0 auth, try to sync/load owner profile
+      switchMap(() => {
+        console.log('✅ Auth0 authenticated, syncing owner profile...');
+        return this.ownerAuth.syncWithAuth0();
+      })
+    ).subscribe({
+      next: (owner) => {
+        if (owner) {
+          console.log('✅ Owner profile loaded, redirecting to dashboard...');
+          this.router.navigate(['/owner/dashboard']);
+        } else {
+          console.log('⚠️ No owner profile found, redirecting to register...');
+          this.toast.info('Please complete your registration');
+          this.router.navigate(['/owner/register']);
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error syncing owner profile:', err);
+        // If sync fails, user might need to register
+        this.toast.info('Please complete your registration');
+        this.router.navigate(['/owner/register']);
+      }
     });
   }
 
