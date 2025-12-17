@@ -14,11 +14,22 @@ export class AppComponent implements OnInit {
   constructor(private readonly auth0: AuthService) {}
 
   ngOnInit(): void {
-    // Handle Auth0 callback errors
+    // Handle Auth0 callback errors - clear cache and retry
     this.auth0.error$.pipe(
       filter((err) => err !== null)
     ).subscribe((err) => {
       console.error('❌ Auth0 error:', err);
+      
+      // If unauthorized error, clear the cache and allow fresh login
+      if (err?.message?.includes('Unauthorized') || err?.message?.includes('401')) {
+        console.log('🧹 Clearing stale Auth0 cache...');
+        // Clear Auth0's cache from localStorage
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('@@auth0spajs@@')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
     });
 
     // Log when user is authenticated
