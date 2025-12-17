@@ -60,16 +60,21 @@ export class OwnerAuthService implements OnDestroy {
    * Initiate Auth0 login redirect
    */
   loginWithAuth0(returnTo?: string): void {
-    console.log('🔐 Initiating Auth0 login redirect...');
-    console.log('   Auth0 service available:', !!this.auth0);
+    // Direct redirect to Auth0 (bypasses SDK issues)
+    const domain = environment.auth0.domain;
+    const clientId = environment.auth0.clientId;
+    const redirectUri = encodeURIComponent(window.location.origin);
+    const audience = encodeURIComponent(environment.auth0.audience || '');
     
-    this.auth0.loginWithRedirect({
-      appState: { target: returnTo ?? '/owner/dashboard' }
-    }).then(() => {
-      console.log('✅ Auth0 redirect initiated');
-    }).catch((err) => {
-      console.error('❌ Auth0 redirect failed:', err);
-    });
+    const authUrl = `https://${domain}/authorize?` +
+      `response_type=code&` +
+      `client_id=${clientId}&` +
+      `redirect_uri=${redirectUri}&` +
+      `scope=openid%20profile%20email&` +
+      `audience=${audience}`;
+    
+    console.log('🔐 Redirecting to Auth0:', authUrl);
+    window.location.href = authUrl;
   }
 
   /**
