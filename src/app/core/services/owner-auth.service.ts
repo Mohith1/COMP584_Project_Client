@@ -215,7 +215,7 @@ export class OwnerAuthService implements OnDestroy {
     this.clearAuthState();
     this.auth0.logout({
       logoutParams: {
-        returnTo: window.location.origin + '/owner/login'
+        returnTo: window.location.origin
       }
     });
   }
