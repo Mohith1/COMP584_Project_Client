@@ -10,6 +10,12 @@ const path = require('path');
 
 const envPath = path.join(__dirname, '../src/environments/environment.ts');
 
+// Debug: Log all NG_APP environment variables
+console.log('🔍 Checking environment variables...');
+Object.keys(process.env).filter(key => key.startsWith('NG_APP') || key.startsWith('AUTH0')).forEach(key => {
+  console.log(`   ${key}: ${process.env[key] ? '✓ SET' : '✗ NOT SET'}`);
+});
+
 // Helper function to extract domain without protocol
 function extractDomain(url) {
   if (!url || url.includes('{your')) return url; // Skip placeholders
@@ -22,6 +28,7 @@ const apiUrl = process.env.NG_APP_API_URL || process.env.API_URL || 'https://fle
 
 // Auth0 configuration (domain should be without protocol for Auth0 SDK)
 let auth0Domain = process.env.NG_APP_OKTA_DOMAIN || process.env.AUTH0_DOMAIN || '{yourAuth0Domain}';
+console.log(`   Raw NG_APP_OKTA_DOMAIN: ${process.env.NG_APP_OKTA_DOMAIN}`);
 auth0Domain = extractDomain(auth0Domain);
 
 const auth0ClientId = process.env.NG_APP_OKTA_CLIENT_ID || process.env.AUTH0_CLIENT_ID || '{yourAuth0ClientId}';

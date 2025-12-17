@@ -28,11 +28,8 @@ export class OwnerLoginComponent implements OnInit {
 
   loginWithAuth0(): void {
     this.isLoading.set(true);
-    try {
-      this.ownerAuth.loginWithAuth0('/owner/login/callback');
-    } catch (err) {
-      this.isLoading.set(false);
-      this.toast.error('Failed to redirect to login. Please try again.');
-    }
+    // loginWithAuth0 triggers Auth0 redirect - no callback expected
+    // The loading state will remain until redirect happens
+    this.ownerAuth.loginWithAuth0();
   }
 }
