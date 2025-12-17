@@ -60,8 +60,15 @@ export class OwnerAuthService implements OnDestroy {
    * Initiate Auth0 login redirect
    */
   loginWithAuth0(returnTo?: string): void {
+    console.log('🔐 Initiating Auth0 login redirect...');
+    console.log('   Auth0 service available:', !!this.auth0);
+    
     this.auth0.loginWithRedirect({
       appState: { target: returnTo ?? '/owner/dashboard' }
+    }).then(() => {
+      console.log('✅ Auth0 redirect initiated');
+    }).catch((err) => {
+      console.error('❌ Auth0 redirect failed:', err);
     });
   }
 

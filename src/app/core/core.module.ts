@@ -16,6 +16,12 @@ const getRedirectUri = (): string => {
   return environment.auth0.redirectUri;
 };
 
+// Debug: Log Auth0 configuration
+console.log('🔧 Auth0 Configuration:');
+console.log('   Domain:', environment.auth0.domain);
+console.log('   Client ID:', environment.auth0.clientId ? '✓ SET' : '✗ NOT SET');
+console.log('   Redirect URI:', getRedirectUri());
+
 @NgModule({
   imports: [
     CommonModule,
