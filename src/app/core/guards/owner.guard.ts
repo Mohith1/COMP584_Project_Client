@@ -36,37 +36,28 @@ export class OwnerGuard implements CanActivate, CanActivateChild {
         console.log('🔐 OwnerGuard: Auth0 authenticated?', isAuth);
         
         if (!isAuth) {
-          // Not authenticated with Auth0, redirect to login page (not trigger Auth0 redirect)
+          // Not authenticated with Auth0, redirect to login page
           console.log('🔐 OwnerGuard: Not authenticated, redirecting to login');
           return of(this.router.createUrlTree(['/owner/login']));
         }
 
-        // Check if owner profile exists
-        if (this.ownerAuth.isAuthenticated()) {
-          console.log('🔐 OwnerGuard: Owner profile exists, allowing access');
-          this.personaService.setPersona('owner');
-          return of(true);
-        }
-
-        // Try to sync/load owner profile from backend
-        console.log('🔐 OwnerGuard: Syncing with backend...');
-        return this.ownerAuth.syncWithAuth0().pipe(
-          map((owner) => {
+        // Auth0 authenticated - allow access to dashboard
+        console.log('🔐 OwnerGuard: Auth0 authenticated, allowing access');
+        this.personaService.setPersona('owner');
+        
+        // Try to sync owner profile in background (non-blocking)
+        this.ownerAuth.syncWithAuth0().subscribe({
+          next: (owner) => {
             if (owner) {
-              console.log('🔐 OwnerGuard: Owner profile loaded, allowing access');
-              this.personaService.setPersona('owner');
-              return true;
+              console.log('🔐 OwnerGuard: Owner profile synced');
             }
-            // Authenticated with Auth0 but no owner profile - redirect to register
-            console.log('🔐 OwnerGuard: No owner profile, redirecting to register');
-            return this.router.createUrlTree(['/owner/register']);
-          }),
-          catchError((err) => {
-            console.error('🔐 OwnerGuard: Error syncing:', err);
-            // On error, redirect to register (user might need to create profile)
-            return of(this.router.createUrlTree(['/owner/register']));
-          })
-        );
+          },
+          error: (err) => {
+            console.log('🔐 OwnerGuard: No owner profile yet (will create on first action)');
+          }
+        });
+        
+        return of(true);
       }),
       catchError((err) => {
         console.error('🔐 OwnerGuard: Error checking auth:', err);
