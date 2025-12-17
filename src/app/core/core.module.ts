@@ -42,7 +42,14 @@ const getAudience = (): string | undefined => {
         redirect_uri: getRedirectUri(),
         ...(getAudience() && { audience: getAudience() })
       },
-      cacheLocation: 'localstorage'
+      cacheLocation: 'localstorage',
+      useRefreshTokens: true,
+      useRefreshTokensFallback: true,
+      // Handle callback processing in the root app to ensure URL params aren't lost
+      // before the SDK can process them
+      httpInterceptor: {
+        allowedList: []
+      }
     })
   ],
   providers: [

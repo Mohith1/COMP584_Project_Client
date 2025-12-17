@@ -57,10 +57,27 @@ export class OwnerAuthService implements OnDestroy {
   }
 
   /**
+   * Clear stale Auth0 transaction data from localStorage
+   */
+  private clearAuth0TransactionData(): void {
+    // Clear any stale PKCE transactions that might interfere with new login
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('@@auth0spajs@@') || key.startsWith('a0.spajs')) {
+        console.log('🧹 Clearing stale Auth0 data:', key);
+        localStorage.removeItem(key);
+      }
+    });
+  }
+
+  /**
    * Initiate Auth0 login redirect using SDK
    */
   loginWithAuth0(returnTo?: string): void {
     console.log('🔐 Initiating Auth0 login via SDK...');
+    
+    // Clear any stale Auth0 transaction data before starting new login
+    this.clearAuth0TransactionData();
+    
     this.auth0.loginWithRedirect({
       appState: { target: returnTo ?? '/owner/dashboard' }
     }).subscribe({
@@ -77,6 +94,9 @@ export class OwnerAuthService implements OnDestroy {
       STORAGE_KEYS.pendingOwnerRegistration,
       JSON.stringify(payload)
     );
+    
+    // Clear any stale Auth0 transaction data
+    this.clearAuth0TransactionData();
     
     // Redirect to Auth0 for authentication with signup hint
     this.auth0.loginWithRedirect({
