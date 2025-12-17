@@ -2,9 +2,10 @@ import { Injectable } from '@angular/core';
 import { FleetSummary, FleetDetail } from '../models/fleet.model';
 import { VehicleSummary, VehicleStatus } from '../models/vehicle.model';
 
-const STORAGE_KEY_PREFIX = 'fleet_mock_data_';
+// Single shared storage key so all users see the same mock data
+const STORAGE_KEY = 'fleet_mock_data_shared';
 
-interface UserMockData {
+interface MockDataState {
   fleets: FleetDetail[];
   nextFleetId: number;
   nextVehicleId: number;
@@ -14,69 +15,46 @@ interface UserMockData {
   providedIn: 'root'
 })
 export class MockDataService {
-  private currentUserId: string | null = null;
   private fleets: FleetDetail[] = [];
   private nextFleetId = 4;
   private nextVehicleId = 13;
 
-  /**
-   * Initialize mock data for a specific user.
-   * Each user gets their own isolated set of fleet data.
-   */
-  initializeForUser(userId: string): void {
-    if (this.currentUserId === userId) {
-      return; // Already initialized for this user
-    }
+  constructor() {
+    this.loadFromStorage();
+  }
 
-    this.currentUserId = userId;
-    const storageKey = STORAGE_KEY_PREFIX + userId;
-    
+  private loadFromStorage(): void {
     try {
-      const stored = localStorage.getItem(storageKey);
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const data: UserMockData = JSON.parse(stored);
+        const data: MockDataState = JSON.parse(stored);
         this.fleets = data.fleets;
         this.nextFleetId = data.nextFleetId;
         this.nextVehicleId = data.nextVehicleId;
-        console.log(`📦 Loaded mock data for user: ${userId.substring(0, 8)}...`);
-      } else {
-        // New user - initialize with default demo data
-        this.fleets = this.getDefaultFleets();
-        this.nextFleetId = 4;
-        this.nextVehicleId = 13;
-        this.saveToStorage();
-        console.log(`📦 Created new mock data for user: ${userId.substring(0, 8)}...`);
+        return;
       }
-    } catch (e) {
-      console.warn('Failed to load mock data from storage, using defaults');
-      this.fleets = this.getDefaultFleets();
-      this.nextFleetId = 4;
-      this.nextVehicleId = 13;
+    } catch {
+      // ignore and fall back to defaults
     }
-  }
 
-  /**
-   * Clear mock data for the current user (on logout)
-   */
-  clearCurrentUser(): void {
-    this.currentUserId = null;
-    this.fleets = [];
+    // Initialize with default demo fleets
+    this.fleets = this.getDefaultFleets();
+    this.nextFleetId = 4;
+    this.nextVehicleId = 13;
+    this.saveToStorage();
   }
 
   private saveToStorage(): void {
-    if (!this.currentUserId) return;
-    
-    const storageKey = STORAGE_KEY_PREFIX + this.currentUserId;
-    const data: UserMockData = {
+    const data: MockDataState = {
       fleets: this.fleets,
       nextFleetId: this.nextFleetId,
       nextVehicleId: this.nextVehicleId
     };
-    
+
     try {
-      localStorage.setItem(storageKey, JSON.stringify(data));
-    } catch (e) {
-      console.warn('Failed to save mock data to storage');
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch {
+      // If storage fails, just operate in-memory
     }
   }
 
@@ -248,7 +226,7 @@ export class MockDataService {
   }
 
   getFleets(): FleetSummary[] {
-    return this.fleets.map(f => ({
+    return this.fleets.map((f) => ({
       id: f.id,
       name: f.name,
       description: f.description,
@@ -259,10 +237,14 @@ export class MockDataService {
   }
 
   getFleetDetail(fleetId: string): FleetDetail | null {
-    return this.fleets.find(f => f.id === fleetId) || null;
+    return this.fleets.find((f) => f.id === fleetId) || null;
   }
 
-  createFleet(payload: { name: string; description?: string; status?: 'Active' | 'Inactive' }): FleetSummary {
+  createFleet(payload: {
+    name: string;
+    description?: string;
+    status?: 'Active' | 'Inactive';
+  }): FleetSummary {
     const newFleet: FleetDetail = {
       id: `fleet-${String(this.nextFleetId++).padStart(3, '0')}`,
       name: payload.name,
@@ -284,16 +266,23 @@ export class MockDataService {
     };
   }
 
-  updateFleet(fleetId: string, payload: { name: string; description?: string; status?: 'Active' | 'Inactive' }): FleetSummary | null {
-    const fleet = this.fleets.find(f => f.id === fleetId);
+  updateFleet(
+    fleetId: string,
+    payload: {
+      name: string;
+      description?: string;
+      status?: 'Active' | 'Inactive';
+    }
+  ): FleetSummary | null {
+    const fleet = this.fleets.find((f) => f.id === fleetId);
     if (!fleet) return null;
-    
+
     fleet.name = payload.name;
     fleet.description = payload.description;
     fleet.status = payload.status || fleet.status;
     fleet.updatedOn = new Date().toISOString();
     this.saveToStorage();
-    
+
     return {
       id: fleet.id,
       name: fleet.name,
@@ -305,7 +294,7 @@ export class MockDataService {
   }
 
   deleteFleet(fleetId: string): boolean {
-    const index = this.fleets.findIndex(f => f.id === fleetId);
+    const index = this.fleets.findIndex((f) => f.id === fleetId);
     if (index > -1) {
       this.fleets.splice(index, 1);
       this.saveToStorage();
@@ -314,15 +303,18 @@ export class MockDataService {
     return false;
   }
 
-  addVehicle(fleetId: string, payload: {
-    vin: string;
-    plateNumber: string;
-    make?: string | null;
-    model?: string | null;
-    modelYear: number;
-    status?: VehicleStatus;
-  }): VehicleSummary | null {
-    const fleet = this.fleets.find(f => f.id === fleetId);
+  addVehicle(
+    fleetId: string,
+    payload: {
+      vin: string;
+      plateNumber: string;
+      make?: string | null;
+      model?: string | null;
+      modelYear: number;
+      status?: VehicleStatus;
+    }
+  ): VehicleSummary | null {
+    const fleet = this.fleets.find((f) => f.id === fleetId);
     if (!fleet) return null;
 
     const newVehicle: VehicleSummary = {
@@ -344,7 +336,7 @@ export class MockDataService {
 
   updateVehicleStatus(vehicleId: string, status: VehicleStatus): VehicleSummary | null {
     for (const fleet of this.fleets) {
-      const vehicle = fleet.vehicles.find(v => v.id === vehicleId);
+      const vehicle = fleet.vehicles.find((v) => v.id === vehicleId);
       if (vehicle) {
         vehicle.status = status;
         this.saveToStorage();
@@ -356,7 +348,7 @@ export class MockDataService {
 
   deleteVehicle(vehicleId: string): boolean {
     for (const fleet of this.fleets) {
-      const index = fleet.vehicles.findIndex(v => v.id === vehicleId);
+      const index = fleet.vehicles.findIndex((v) => v.id === vehicleId);
       if (index > -1) {
         fleet.vehicles.splice(index, 1);
         fleet.vehicleCount = fleet.vehicles.length;
@@ -367,3 +359,5 @@ export class MockDataService {
     return false;
   }
 }
+
+
