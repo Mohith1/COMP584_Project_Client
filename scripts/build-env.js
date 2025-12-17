@@ -46,7 +46,8 @@ if (!auth0ClientId) {
   process.exit(1);
 }
 
-const auth0Audience = process.env.NG_APP_OKTA_AUDIENCE || process.env.AUTH0_AUDIENCE || 'api://default';
+// Don't set a default audience - it's optional and causes issues if invalid
+const auth0Audience = process.env.NG_APP_OKTA_AUDIENCE || process.env.AUTH0_AUDIENCE || '';
 const redirectUri = process.env.NG_APP_OKTA_REDIRECT_URI || process.env.AUTH0_REDIRECT_URI || 'https://comp-584-project-client-vercel.vercel.app';
 
 // Generate environment.ts content
