@@ -73,7 +73,7 @@ export class OwnerAuthService implements OnDestroy {
       `scope=openid%20profile%20email`;
     
     // Only add audience if it's a valid Auth0 API identifier (not the Okta default)
-    const audience = environment.auth0.audience;
+    const audience: string = environment.auth0.audience || '';
     if (audience && audience !== 'api://default' && !audience.includes('{your')) {
       authUrl += `&audience=${encodeURIComponent(audience)}`;
     }

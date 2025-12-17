@@ -24,7 +24,7 @@ console.log('   Redirect URI:', getRedirectUri());
 
 // Get audience only if it's a valid Auth0 API identifier
 const getAudience = (): string | undefined => {
-  const audience = environment.auth0.audience;
+  const audience: string = environment.auth0.audience || '';
   if (audience && audience !== 'api://default' && !audience.includes('{your')) {
     return audience;
   }
