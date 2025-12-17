@@ -63,6 +63,8 @@ export class OwnerAuthService implements OnDestroy {
     console.log('🔐 Initiating Auth0 login via SDK...');
     this.auth0.loginWithRedirect({
       appState: { target: returnTo ?? '/owner/dashboard' }
+    }).subscribe({
+      error: (err) => console.error('❌ Auth0 login redirect failed:', err)
     });
   }
 
@@ -82,6 +84,8 @@ export class OwnerAuthService implements OnDestroy {
       authorizationParams: {
         screen_hint: 'signup'
       }
+    }).subscribe({
+      error: (err) => console.error('❌ Auth0 signup redirect failed:', err)
     });
   }
 
