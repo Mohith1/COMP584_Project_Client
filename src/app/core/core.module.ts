@@ -7,13 +7,21 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { HttpErrorInterceptor } from './interceptors/http-error.interceptor';
 import { environment } from '../../environments/environment';
 
-// Build redirect URI dynamically to ensure it matches the current origin
-// This prevents callback URL mismatch errors with Auth0
+// Build redirect URI - use environment config for consistency
+// The redirect_uri MUST match exactly between authorize request and token exchange
 const getRedirectUri = (): string => {
-  if (typeof window !== 'undefined') {
-    return window.location.origin;
-  }
-  return environment.auth0.redirectUri;
+  // Use the configured redirect URI from environment
+  // This ensures consistency between login redirect and token exchange
+  const envUri = environment.auth0.redirectUri;
+  const windowOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  
+  // Log both for debugging
+  console.log('🔧 Auth0 Redirect URI Check:');
+  console.log('   Environment config:', envUri);
+  console.log('   Window origin:', windowOrigin);
+  
+  // Use window.location.origin as it's the most accurate
+  return windowOrigin || envUri;
 };
 
 // Debug: Log Auth0 configuration
@@ -43,10 +51,6 @@ const getAudience = (): string | undefined => {
         ...(getAudience() && { audience: getAudience() })
       },
       cacheLocation: 'localstorage',
-      useRefreshTokens: true,
-      useRefreshTokensFallback: true,
-      // Handle callback processing in the root app to ensure URL params aren't lost
-      // before the SDK can process them
       httpInterceptor: {
         allowedList: []
       }
