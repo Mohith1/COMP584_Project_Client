@@ -27,13 +27,27 @@ function extractDomain(url) {
 const apiUrl = process.env.NG_APP_API_URL || process.env.API_URL || 'https://fleetmanagement-api-production.up.railway.app';
 
 // Auth0 configuration (domain should be without protocol for Auth0 SDK)
-let auth0Domain = process.env.NG_APP_OKTA_DOMAIN || process.env.AUTH0_DOMAIN || '{yourAuth0Domain}';
+let auth0Domain = process.env.NG_APP_OKTA_DOMAIN || process.env.AUTH0_DOMAIN;
 console.log(`   Raw NG_APP_OKTA_DOMAIN: ${process.env.NG_APP_OKTA_DOMAIN}`);
+
+// Validate required Auth0 environment variables
+if (!auth0Domain) {
+  console.error('❌ ERROR: NG_APP_OKTA_DOMAIN environment variable is not set!');
+  console.error('   Please set this in your Vercel project settings.');
+  process.exit(1);
+}
+
 auth0Domain = extractDomain(auth0Domain);
 
-const auth0ClientId = process.env.NG_APP_OKTA_CLIENT_ID || process.env.AUTH0_CLIENT_ID || '{yourAuth0ClientId}';
+const auth0ClientId = process.env.NG_APP_OKTA_CLIENT_ID || process.env.AUTH0_CLIENT_ID;
+if (!auth0ClientId) {
+  console.error('❌ ERROR: NG_APP_OKTA_CLIENT_ID environment variable is not set!');
+  console.error('   Please set this in your Vercel project settings.');
+  process.exit(1);
+}
+
 const auth0Audience = process.env.NG_APP_OKTA_AUDIENCE || process.env.AUTH0_AUDIENCE || 'api://default';
-const redirectUri = process.env.NG_APP_OKTA_REDIRECT_URI || process.env.AUTH0_REDIRECT_URI || 'https://your-vercel-app.vercel.app/owner/login/callback';
+const redirectUri = process.env.NG_APP_OKTA_REDIRECT_URI || process.env.AUTH0_REDIRECT_URI || 'https://comp-584-project-client-vercel.vercel.app';
 
 // Generate environment.ts content
 const envContent = `export const environment = {
