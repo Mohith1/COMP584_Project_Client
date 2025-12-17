@@ -64,14 +64,19 @@ export class OwnerAuthService implements OnDestroy {
     const domain = environment.auth0.domain;
     const clientId = environment.auth0.clientId;
     const redirectUri = encodeURIComponent(window.location.origin);
-    const audience = encodeURIComponent(environment.auth0.audience || '');
     
-    const authUrl = `https://${domain}/authorize?` +
+    // Build authorization URL - only include audience if it's set and not the default Okta value
+    let authUrl = `https://${domain}/authorize?` +
       `response_type=code&` +
       `client_id=${clientId}&` +
       `redirect_uri=${redirectUri}&` +
-      `scope=openid%20profile%20email&` +
-      `audience=${audience}`;
+      `scope=openid%20profile%20email`;
+    
+    // Only add audience if it's a valid Auth0 API identifier (not the Okta default)
+    const audience = environment.auth0.audience;
+    if (audience && audience !== 'api://default' && !audience.includes('{your')) {
+      authUrl += `&audience=${encodeURIComponent(audience)}`;
+    }
     
     console.log('🔐 Redirecting to Auth0:', authUrl);
     window.location.href = authUrl;

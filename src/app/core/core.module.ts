@@ -22,6 +22,15 @@ console.log('   Domain:', environment.auth0.domain);
 console.log('   Client ID:', environment.auth0.clientId ? '✓ SET' : '✗ NOT SET');
 console.log('   Redirect URI:', getRedirectUri());
 
+// Get audience only if it's a valid Auth0 API identifier
+const getAudience = (): string | undefined => {
+  const audience = environment.auth0.audience;
+  if (audience && audience !== 'api://default' && !audience.includes('{your')) {
+    return audience;
+  }
+  return undefined;
+};
+
 @NgModule({
   imports: [
     CommonModule,
@@ -31,7 +40,7 @@ console.log('   Redirect URI:', getRedirectUri());
       clientId: environment.auth0.clientId,
       authorizationParams: {
         redirect_uri: getRedirectUri(),
-        audience: environment.auth0.audience
+        ...(getAudience() && { audience: getAudience() })
       },
       cacheLocation: 'localstorage'
     })
