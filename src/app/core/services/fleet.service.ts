@@ -1,7 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, switchMap, take } from 'rxjs/operators';
+import { AuthService } from '@auth0/auth0-angular';
 import { environment } from '../../../environments/environment';
 import { FleetDetail, FleetSummary, UpsertFleetRequest } from '../models/fleet.model';
 import { PaginationRequest, PaginatedResponse, ApiPaginatedResponse } from '../models/common.model';
@@ -14,12 +15,25 @@ import { MockDataService } from './mock-data.service';
 export class FleetService {
   private readonly baseUrl = environment.apiUrl;
   private useMockData = false;
+  private mockDataInitialized = false;
 
   constructor(
     private readonly http: HttpClient,
     private readonly ownerAuth: OwnerAuthService,
-    private readonly mockData: MockDataService
-  ) {}
+    private readonly mockData: MockDataService,
+    private readonly auth0: AuthService
+  ) {
+    // Initialize mock data when user is authenticated
+    this.auth0.user$.subscribe(user => {
+      if (user?.sub && !this.mockDataInitialized) {
+        this.mockData.initializeForUser(user.sub);
+        this.mockDataInitialized = true;
+      } else if (!user) {
+        this.mockData.clearCurrentUser();
+        this.mockDataInitialized = false;
+      }
+    });
+  }
 
   getFleets(ownerId: string | null, pagination?: PaginationRequest): Observable<PaginatedResponse<FleetSummary>> {
     // Use mock data if no ownerId or if mock mode is enabled
