@@ -67,6 +67,12 @@ export class OktaAuthFacade {
       filter((user): user is User => user !== null && user !== undefined),
       take(1)
     ).subscribe((user) => {
+      // Auth0 user.sub should always be present, but provide fallback for type safety
+      if (!user.sub) {
+        console.error('Auth0 user missing sub identifier');
+        return;
+      }
+
       const profile: OktaProfile = {
         sub: user.sub,
         name: user.name,
