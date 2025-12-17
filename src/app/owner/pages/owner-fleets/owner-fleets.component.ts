@@ -99,9 +99,7 @@ export class OwnerFleetsComponent implements OnInit {
 
   loadFleets() {
     const ownerId = this.ownerAuth.ownerId();
-    if (!ownerId) {
-      return;
-    }
+    // Allow loading even without ownerId - service will use mock data
 
     this.ownerState.setLoading(true);
     this.fleetService
@@ -163,9 +161,7 @@ export class OwnerFleetsComponent implements OnInit {
     }
 
     const ownerId = this.ownerAuth.ownerId();
-    if (!ownerId) {
-      return;
-    }
+    // Allow saving even without ownerId - service will use mock data
 
     this.isSubmittingFleet = true;
     this.fleetForm.disable();
