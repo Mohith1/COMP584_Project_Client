@@ -7,6 +7,15 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { HttpErrorInterceptor } from './interceptors/http-error.interceptor';
 import { environment } from '../../environments/environment';
 
+// Build redirect URI dynamically to ensure it matches the current origin
+// This prevents callback URL mismatch errors with Auth0
+const getRedirectUri = (): string => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return environment.auth0.redirectUri;
+};
+
 @NgModule({
   imports: [
     CommonModule,
@@ -15,7 +24,7 @@ import { environment } from '../../environments/environment';
       domain: environment.auth0.domain,
       clientId: environment.auth0.clientId,
       authorizationParams: {
-        redirect_uri: environment.auth0.redirectUri,
+        redirect_uri: getRedirectUri(),
         audience: environment.auth0.audience
       },
       cacheLocation: 'localstorage'
