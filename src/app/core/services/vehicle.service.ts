@@ -4,9 +4,12 @@ import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
-  UpsertVehicleRequest,
+  CreateVehicleRequest,
+  UpdateVehicleRequest,
   VehicleSummary,
-  VehicleStatus
+  VehicleStatus,
+  statusStringToNumber,
+  statusNumberToString
 } from '../models/vehicle.model';
 import { MockDataService } from './mock-data.service';
 
@@ -26,27 +29,41 @@ export class VehicleService {
     this.useMockData = useMock;
   }
 
-  addVehicle(fleetId: string, payload: UpsertVehicleRequest): Observable<VehicleSummary> {
+  addVehicle(fleetId: string, payload: CreateVehicleRequest): Observable<VehicleSummary> {
+    // Convert status to string for mock data compatibility
+    const normalizedPayload = {
+      ...payload,
+      status: typeof payload.status === 'number' 
+        ? statusNumberToString(payload.status)
+        : (payload.status as VehicleStatus | undefined)
+    };
+
     if (this.useMockData) {
-      const vehicle = this.mockData.addVehicle(fleetId, payload);
+      const vehicle = this.mockData.addVehicle(fleetId, normalizedPayload as any);
       if (vehicle) {
         return of(vehicle);
       }
       throw new Error('Fleet not found');
     }
 
+    // Convert status from string to number if needed (server expects number)
+    const serverPayload = {
+      ...payload,
+      fleetId, // Ensure fleetId is set
+      status: typeof payload.status === 'string' 
+        ? statusStringToNumber(payload.status as VehicleStatus)
+        : payload.status ?? 0
+    };
+
     return this.http.post<VehicleSummary>(
       `${this.baseUrl}/api/Fleets/${fleetId}/vehicles`,
-      payload
+      serverPayload
     ).pipe(
-      map(response => ({
-        ...response,
-        year: response.modelYear // Add legacy 'year' field for template compatibility
-      })),
+      map(response => this.normalizeVehicleResponse(response)),
       catchError(() => {
         console.log('📦 Using mock add vehicle (backend unavailable)');
         this.useMockData = true;
-        const vehicle = this.mockData.addVehicle(fleetId, payload);
+        const vehicle = this.mockData.addVehicle(fleetId, normalizedPayload as any);
         if (vehicle) {
           return of(vehicle);
         }
@@ -55,7 +72,12 @@ export class VehicleService {
     );
   }
 
-  updateVehicle(vehicleId: string, payload: UpsertVehicleRequest): Observable<VehicleSummary> {
+  updateVehicle(vehicleId: string, payload: UpdateVehicleRequest): Observable<VehicleSummary> {
+    // Normalize status to string for consistency
+    const normalizedStatus = typeof payload.status === 'number' 
+      ? statusNumberToString(payload.status)
+      : (payload.status as VehicleStatus | undefined);
+
     if (this.useMockData) {
       // For mock, just return the payload as the updated vehicle
       return of({
@@ -63,18 +85,23 @@ export class VehicleService {
         fleetId: '',
         ...payload,
         year: payload.modelYear,
-        status: payload.status || 'Available'
+        status: (normalizedStatus || 'Available') as VehicleStatus
       });
     }
 
+    // Convert status from string to number if needed (server expects number)
+    const serverPayload = {
+      ...payload,
+      status: normalizedStatus 
+        ? statusStringToNumber(normalizedStatus)
+        : 0
+    };
+
     return this.http.put<VehicleSummary>(
       `${this.baseUrl}/api/Vehicles/${vehicleId}`,
-      payload
+      serverPayload
     ).pipe(
-      map(response => ({
-        ...response,
-        year: response.modelYear // Add legacy 'year' field for template compatibility
-      })),
+      map(response => this.normalizeVehicleResponse(response)),
       catchError(() => {
         console.log('📦 Using mock update vehicle (backend unavailable)');
         this.useMockData = true;
@@ -98,14 +125,14 @@ export class VehicleService {
       throw new Error('Vehicle not found');
     }
 
+    // Convert status from string to number (server expects number)
+    const statusNumber = statusStringToNumber(status);
+
     return this.http.put<VehicleSummary>(
       `${this.baseUrl}/api/Vehicles/${vehicleId}`,
-      { status }
+      { status: statusNumber }
     ).pipe(
-      map(response => ({
-        ...response,
-        year: response.modelYear // Add legacy 'year' field for template compatibility
-      })),
+      map(response => this.normalizeVehicleResponse(response)),
       catchError(() => {
         console.log('📦 Using mock update status (backend unavailable)');
         this.useMockData = true;
@@ -116,6 +143,22 @@ export class VehicleService {
         throw new Error('Vehicle not found');
       })
     );
+  }
+
+  /**
+   * Normalize vehicle response from server (status as number) to client format (status as string)
+   */
+  private normalizeVehicleResponse(vehicle: VehicleSummary): VehicleSummary {
+    // Convert status from number to string if needed
+    const status = typeof vehicle.status === 'number' 
+      ? statusNumberToString(vehicle.status)
+      : vehicle.status;
+
+    return {
+      ...vehicle,
+      status: status as VehicleStatus,
+      year: vehicle.modelYear // Legacy field for template compatibility
+    };
   }
 
   deleteVehicle(vehicleId: string): Observable<string> {

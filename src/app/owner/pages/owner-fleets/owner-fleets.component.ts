@@ -1,14 +1,16 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { finalize } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { OwnerAuthService } from '../../../core/services/owner-auth.service';
 import { OwnerStateService } from '../../../core/state/owner-state.service';
 import { FleetService } from '../../../core/services/fleet.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { FleetSummary, UpsertFleetRequest } from '../../../core/models/fleet.model';
-import { VehicleSummary, VehicleStatus, UpsertVehicleRequest } from '../../../core/models/vehicle.model';
+import { RealtimeService } from '../../../core/services/realtime.service';
+import { FleetSummary, CreateFleetRequest, UpdateFleetRequest } from '../../../core/models/fleet.model';
+import { VehicleSummary, VehicleStatus, CreateVehicleRequest } from '../../../core/models/vehicle.model';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { vinValidator, normalizeVin, normalizePlate } from '../../../core/validators/vin.validator';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,7 +21,9 @@ import { HttpErrorResponse } from '@angular/common/http';
   styleUrls: ['./owner-fleets.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class OwnerFleetsComponent implements OnInit {
+export class OwnerFleetsComponent implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+  
   readonly fleets = this.ownerState.fleets;
   readonly vehicles = this.ownerState.vehicles;
   readonly loading = this.ownerState.loading;
@@ -65,7 +69,8 @@ export class OwnerFleetsComponent implements OnInit {
     private readonly vehicleService: VehicleService,
     private readonly dialog: MatDialog,
     private readonly toast: ToastService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly realtimeService: RealtimeService
   ) {}
 
   ngOnInit(): void {
@@ -75,6 +80,17 @@ export class OwnerFleetsComponent implements OnInit {
     }
 
     this.loadFleets();
+
+    // Start SignalR real-time connection
+    const ownerId = this.ownerAuth.ownerId();
+    if (ownerId) {
+      this.realtimeService.start(ownerId).catch((error) => {
+        console.warn('⚠️ SignalR connection failed, continuing without real-time updates:', error);
+      });
+    }
+
+    // Subscribe to state updates from SignalR (handled automatically by OwnerStateService)
+    // State updates will trigger change detection via signals
 
     // Auto-normalize VIN input
     this.vehicleForm.get('vin')?.valueChanges.subscribe((value) => {
@@ -119,6 +135,11 @@ export class OwnerFleetsComponent implements OnInit {
   }
 
   selectFleet(fleet: FleetSummary) {
+    // Leave previous fleet group if existed
+    if (this.selectedFleet) {
+      this.realtimeService.leaveFleetGroup(this.selectedFleet.id).catch(console.error);
+    }
+
     this.selectedFleet = fleet;
     this.fleetForm.patchValue({
       id: fleet.id,
@@ -127,11 +148,18 @@ export class OwnerFleetsComponent implements OnInit {
       status: fleet.status
     });
     this.loadFleetDetail(fleet.id);
+    
+    // Join fleet group for real-time vehicle updates
+    this.realtimeService.joinFleetGroup(fleet.id).catch(console.error);
+    
     this.cdr.markForCheck();
   }
 
   clearSelection() {
     if (this.selectedFleet) {
+      // Leave fleet group for real-time updates
+      this.realtimeService.leaveFleetGroup(this.selectedFleet.id).catch(console.error);
+      
       this.selectedFleet = null;
       this.ownerState.setVehicles([]);
       this.fleetForm.reset({
@@ -167,36 +195,54 @@ export class OwnerFleetsComponent implements OnInit {
     this.fleetForm.disable();
 
     const formValue = this.fleetForm.value;
-    const { id, ...payload } = {
-      ...formValue,
-      name: formValue.name?.trim() || '',
-      description: formValue.description?.trim() || undefined
-    } as UpsertFleetRequest & {
-      id?: string;
-    };
-
-    const request$ = id
-      ? this.fleetService.updateFleet(id, payload)
-      : this.fleetService.createFleet(ownerId, payload);
-
-    request$.subscribe({
-      next: (fleet) => {
-        this.ownerState.upsertFleet(fleet);
-        this.toast.success(`Fleet ${id ? 'updated' : 'created'} successfully.`);
-        if (!id) {
-          this.selectFleet(fleet);
+    const { id, status, ...basePayload } = formValue;
+    
+    if (id) {
+      // Update existing fleet
+      const updatePayload: UpdateFleetRequest = {
+        name: basePayload.name?.trim() || '',
+        description: basePayload.description?.trim() || undefined
+      };
+      
+      this.fleetService.updateFleet(id, updatePayload).subscribe({
+        next: (fleet) => {
+          this.ownerState.upsertFleet(fleet);
+          this.toast.success('Fleet updated successfully.');
+          this.isSubmittingFleet = false;
+          this.fleetForm.enable();
+          this.cdr.markForCheck();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.handleFleetError(error);
+          this.isSubmittingFleet = false;
+          this.fleetForm.enable();
+          this.cdr.markForCheck();
         }
-        this.isSubmittingFleet = false;
-        this.fleetForm.enable();
-        this.cdr.markForCheck();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.handleFleetError(error);
-        this.isSubmittingFleet = false;
-        this.fleetForm.enable();
-        this.cdr.markForCheck();
-      }
-    });
+      });
+    } else {
+      // Create new fleet
+      const createPayload: CreateFleetRequest = {
+        name: basePayload.name?.trim() || '',
+        description: basePayload.description?.trim() || undefined
+      };
+      
+      this.fleetService.createFleet(ownerId, createPayload).subscribe({
+        next: (fleet) => {
+          this.ownerState.upsertFleet(fleet);
+          this.toast.success('Fleet created successfully.');
+          this.selectFleet(fleet);
+          this.isSubmittingFleet = false;
+          this.fleetForm.enable();
+          this.cdr.markForCheck();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.handleFleetError(error);
+          this.isSubmittingFleet = false;
+          this.fleetForm.enable();
+          this.cdr.markForCheck();
+        }
+      });
+    }
   }
 
   private handleFleetError(error: HttpErrorResponse): void {
@@ -265,13 +311,14 @@ export class OwnerFleetsComponent implements OnInit {
     this.vehicleForm.disable();
 
     const formValue = this.vehicleForm.value;
-    const payload: UpsertVehicleRequest = {
+    const payload: CreateVehicleRequest = {
       vin: normalizeVin(formValue.vin ?? ''),
       plateNumber: normalizePlate(formValue.plateNumber ?? ''),
       make: formValue.make && formValue.make.trim() ? formValue.make.trim() : null,
       model: formValue.model && formValue.model.trim() ? formValue.model.trim() : null,
       modelYear: formValue.year ?? this.currentYear,
-      status: (formValue.status ?? 'Available') as VehicleStatus
+      status: (formValue.status ?? 'Available') as VehicleStatus,
+      fleetId: this.selectedFleet.id // Set fleetId from selected fleet
     };
 
     this.vehicleService.addVehicle(this.selectedFleet.id, payload).subscribe({
@@ -408,6 +455,17 @@ export class OwnerFleetsComponent implements OnInit {
       this.ownerState.setVehicles(fleet.vehicles);
       this.cdr.markForCheck();
     });
+  }
+
+  ngOnDestroy(): void {
+    // Leave fleet group if one was selected
+    if (this.selectedFleet) {
+      this.realtimeService.leaveFleetGroup(this.selectedFleet.id).catch(console.error);
+    }
+    
+    this.destroy$.next();
+    this.destroy$.complete();
+    // SignalR will be stopped by RealtimeService ngOnDestroy
   }
 }
 

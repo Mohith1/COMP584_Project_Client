@@ -1,13 +1,15 @@
 <app-page-header
   title="Owner dashboard"
   subtitle="Monitor fleets and telemetry snapshots."
-  [showPrimary]="false"
+  primaryLabel="Manage Fleets"
+  (primary)="navigateToFleets()"
 ></app-page-header>
 
 <section class="stats">
-  <mat-card>
+  <mat-card class="stat-card" (click)="navigateToFleets()" style="cursor: pointer;">
     <h4>Fleets</h4>
     <p class="metric">{{ fleets().length }}</p>
+    <p class="hint">Click to manage</p>
   </mat-card>
   <mat-card>
     <h4>Latest snapshots</h4>

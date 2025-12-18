@@ -64,6 +64,7 @@ export class MockDataService {
         id: 'fleet-001',
         name: 'Downtown Delivery Fleet',
         description: 'Primary delivery vehicles for downtown metropolitan area',
+        ownerId: 'mock-owner-001',
         vehicleCount: 5,
         status: 'Active',
         updatedOn: new Date().toISOString(),
@@ -129,6 +130,7 @@ export class MockDataService {
         id: 'fleet-002',
         name: 'Highway Logistics Fleet',
         description: 'Long-haul trucks for interstate deliveries',
+        ownerId: 'mock-owner-001',
         vehicleCount: 4,
         status: 'Active',
         updatedOn: new Date().toISOString(),
@@ -183,6 +185,7 @@ export class MockDataService {
         id: 'fleet-003',
         name: 'Suburban Service Fleet',
         description: 'Service and maintenance vehicles for suburban areas',
+        ownerId: 'mock-owner-001',
         vehicleCount: 3,
         status: 'Inactive',
         updatedOn: new Date().toISOString(),
@@ -230,6 +233,7 @@ export class MockDataService {
       id: f.id,
       name: f.name,
       description: f.description,
+      ownerId: f.ownerId || 'mock-owner-001',
       vehicleCount: f.vehicles.length,
       status: f.status,
       updatedOn: f.updatedOn
@@ -249,6 +253,7 @@ export class MockDataService {
       id: `fleet-${String(this.nextFleetId++).padStart(3, '0')}`,
       name: payload.name,
       description: payload.description,
+      ownerId: 'mock-owner-001',
       vehicleCount: 0,
       status: payload.status || 'Active',
       updatedOn: new Date().toISOString(),
@@ -260,6 +265,7 @@ export class MockDataService {
       id: newFleet.id,
       name: newFleet.name,
       description: newFleet.description,
+      ownerId: 'mock-owner-001', // Mock owner ID
       vehicleCount: newFleet.vehicleCount,
       status: newFleet.status,
       updatedOn: newFleet.updatedOn
@@ -287,6 +293,7 @@ export class MockDataService {
       id: fleet.id,
       name: fleet.name,
       description: fleet.description,
+      ownerId: fleet.ownerId || 'mock-owner-001', // Mock owner ID
       vehicleCount: fleet.vehicles.length,
       status: fleet.status,
       updatedOn: fleet.updatedOn

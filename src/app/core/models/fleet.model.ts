@@ -4,9 +4,13 @@ export interface FleetSummary {
   id: string;
   name: string;
   description?: string;
+  ownerId: string;              // GUID - from server
+  ownerName?: string;           // Optional - from server
   vehicleCount: number;
-  status: 'Active' | 'Inactive';
-  updatedOn?: string;
+  status?: 'Active' | 'Inactive'; // Optional - server may not return
+  createdAtUtc?: string;        // ISO 8601 - from server
+  updatedAtUtc?: string;        // ISO 8601 - from server
+  updatedOn?: string;           // Legacy field for compatibility
 }
 
 export interface FleetDetail extends FleetSummary {
@@ -14,11 +18,19 @@ export interface FleetDetail extends FleetSummary {
   vehicles: VehicleSummary[];
 }
 
-export interface UpsertFleetRequest {
+export interface CreateFleetRequest {
   name: string;
   description?: string;
-  status?: 'Active' | 'Inactive';
+  ownerId?: string;             // Optional - may be set from route
 }
+
+export interface UpdateFleetRequest {
+  name: string;
+  description?: string;
+}
+
+// Legacy alias for backward compatibility
+export interface UpsertFleetRequest extends CreateFleetRequest {}
 
 
 

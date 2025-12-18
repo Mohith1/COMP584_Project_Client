@@ -22,12 +22,17 @@ export class TelemetryHighlightsComponent {
     if (!this.telemetry.length) {
       return 0;
     }
-    const total = this.telemetry.reduce((sum, item) => sum + item.speed, 0);
+    const total = this.telemetry.reduce(
+      (sum, item) => sum + (item.speedKph ?? item.speed ?? 0), 
+      0
+    );
     return Math.round(total / this.telemetry.length);
   }
 
   get lowFuelCount(): number {
-    return this.telemetry.filter((t) => t.fuelLevel < 25).length;
+    return this.telemetry.filter(
+      (t) => (t.fuelLevelPercentage ?? t.fuelLevel ?? 100) < 25
+    ).length;
   }
 
   get highlightedRows(): TelemetrySnapshot[] {

@@ -3,12 +3,13 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { FleetDetail, FleetSummary, UpsertFleetRequest } from '../models/fleet.model';
+import { FleetDetail, FleetSummary, CreateFleetRequest, UpdateFleetRequest } from '../models/fleet.model';
 import {
   PaginationRequest,
   PaginatedResponse,
   ApiPaginatedResponse
 } from '../models/common.model';
+import { statusNumberToString } from '../models/vehicle.model';
 import { OwnerAuthService } from './owner-auth.service';
 import { MockDataService } from './mock-data.service';
 
@@ -82,13 +83,23 @@ export class FleetService {
     }
 
     return this.http.get<FleetDetail>(`${this.baseUrl}/api/Fleets/${fleetId}`).pipe(
-      map((fleet) => ({
-        ...fleet,
-        vehicles: fleet.vehicles.map((vehicle) => ({
-          ...vehicle,
-          year: vehicle.modelYear // Add legacy 'year' field for template compatibility
-        }))
-      })),
+      map((fleet) => {
+        const normalizedFleet = this.normalizeFleetResponse(fleet);
+        return {
+          ...normalizedFleet,
+          vehicles: fleet.vehicles.map((vehicle) => {
+            // Normalize vehicle status from number to string
+            const status = typeof vehicle.status === 'number' 
+              ? statusNumberToString(vehicle.status)
+              : vehicle.status;
+            return {
+              ...vehicle,
+              status,
+              year: vehicle.modelYear // Add legacy 'year' field for template compatibility
+            };
+          })
+        };
+      }),
       catchError(() => {
         console.log('📦 Using mock fleet detail (backend unavailable)');
         this.useMockData = true;
@@ -105,15 +116,26 @@ export class FleetService {
     throw new Error('Fleet not found');
   }
 
-  createFleet(ownerId: string | null, payload: UpsertFleetRequest): Observable<FleetSummary> {
+  createFleet(ownerId: string | null, payload: CreateFleetRequest): Observable<FleetSummary> {
     if (!ownerId || this.useMockData) {
       const fleet = this.mockData.createFleet(payload);
       return of(fleet);
     }
 
+    // Server accepts both routes: /api/owners/{ownerId}/fleets OR /api/Fleets
+    // If ownerId is in payload, use /api/Fleets; otherwise use nested route
+    const requestPayload = { ...payload };
+    if (!requestPayload.ownerId) {
+      requestPayload.ownerId = ownerId;
+    }
+
+    // Try nested route first (as per server guide)
+    const url = `${this.baseUrl}/api/owners/${ownerId}/fleets`;
+    
     return this.http
-      .post<FleetSummary>(`${this.baseUrl}/api/owners/${ownerId}/fleets`, payload)
+      .post<FleetSummary>(url, requestPayload)
       .pipe(
+        map((fleet) => this.normalizeFleetResponse(fleet)),
         catchError(() => {
           console.log('📦 Using mock create fleet (backend unavailable)');
           this.useMockData = true;
@@ -123,7 +145,7 @@ export class FleetService {
       );
   }
 
-  updateFleet(fleetId: string, payload: UpsertFleetRequest): Observable<FleetSummary> {
+  updateFleet(fleetId: string, payload: UpdateFleetRequest): Observable<FleetSummary> {
     if (this.useMockData) {
       const fleet = this.mockData.updateFleet(fleetId, payload);
       if (fleet) {
@@ -135,6 +157,7 @@ export class FleetService {
     return this.http
       .put<FleetSummary>(`${this.baseUrl}/api/Fleets/${fleetId}`, payload)
       .pipe(
+        map((fleet) => this.normalizeFleetResponse(fleet)),
         catchError(() => {
           console.log('📦 Using mock update fleet (backend unavailable)');
           this.useMockData = true;
@@ -145,6 +168,16 @@ export class FleetService {
           throw new Error('Fleet not found');
         })
       );
+  }
+
+  /**
+   * Normalize fleet response from server to client format
+   */
+  private normalizeFleetResponse(fleet: FleetSummary): FleetSummary {
+    return {
+      ...fleet,
+      updatedOn: fleet.updatedAtUtc || fleet.createdAtUtc || new Date().toISOString()
+    };
   }
 
   deleteFleet(fleetId: string): Observable<string> {

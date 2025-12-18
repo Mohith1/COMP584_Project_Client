@@ -35,18 +35,18 @@ export class TelemetryChartComponent implements OnChanges {
     const latest = this.telemetry.slice(0, 10).reverse();
     this.lineChartData = {
       labels: latest.map((item) =>
-        new Date(item.recordedOn).toLocaleTimeString()
+        new Date(item.capturedAtUtc || item.recordedOn || new Date()).toLocaleTimeString()
       ),
       datasets: [
         {
-          data: latest.map((item) => item.speed),
+          data: latest.map((item) => item.speedKph ?? item.speed ?? 0),
           label: 'Speed (km/h)',
           fill: false,
           borderColor: '#2563eb',
           tension: 0.3
         },
         {
-          data: latest.map((item) => item.fuelLevel),
+          data: latest.map((item) => item.fuelLevelPercentage ?? item.fuelLevel ?? 0),
           label: 'Fuel (%)',
           fill: false,
           borderColor: '#f97316',
