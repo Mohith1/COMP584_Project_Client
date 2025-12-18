@@ -2,10 +2,11 @@ import {
   HttpEvent,
   HttpHandler,
   HttpInterceptor,
-  HttpRequest
+  HttpRequest,
+  HttpErrorResponse
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, from, of } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { switchMap, catchError, take } from 'rxjs/operators';
 import { AuthService } from '@auth0/auth0-angular';
 import { OwnerAuthService } from '../services/owner-auth.service';
@@ -39,7 +40,7 @@ export class AuthInterceptor implements HttpInterceptor {
         take(1),
         switchMap((isAuth) => {
           if (!isAuth) {
-            console.log('🔑 AuthInterceptor: Not authenticated, skipping token');
+            console.log('🔑 AuthInterceptor: Not authenticated with Auth0, skipping token');
             return next.handle(req);
           }
 
@@ -47,7 +48,10 @@ export class AuthInterceptor implements HttpInterceptor {
           return this.auth0.getAccessTokenSilently().pipe(
             switchMap((token) => {
               if (token) {
-                console.log('🔑 AuthInterceptor: Attaching token to request:', req.url.split('?')[0]);
+                // Log token info for debugging (first 20 chars only)
+                console.log('🔑 AuthInterceptor: Token obtained, attaching to:', req.url.split('?')[0]);
+                console.log('🔑 AuthInterceptor: Token preview:', token.substring(0, 50) + '...');
+                
                 const authReq = req.clone({
                   setHeaders: {
                     Authorization: `Bearer ${token}`
@@ -55,12 +59,13 @@ export class AuthInterceptor implements HttpInterceptor {
                 });
                 return next.handle(authReq);
               }
-              console.warn('🔑 AuthInterceptor: No token available');
+              console.warn('🔑 AuthInterceptor: No token returned from Auth0');
               return next.handle(req);
             }),
             catchError((err) => {
-              console.error('🔑 AuthInterceptor: Failed to get token:', err?.message);
-              // Still proceed without token - let server return 401
+              // This catches errors from getAccessTokenSilently() - e.g., consent required, login required
+              console.error('🔑 AuthInterceptor: Failed to get Auth0 token:', err?.error || err?.message || err);
+              // Proceed without token - let server return 401
               return next.handle(req);
             })
           );

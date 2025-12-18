@@ -41,25 +41,27 @@ export class OwnerGuard implements CanActivate, CanActivateChild {
           return of(this.router.createUrlTree(['/owner/login']));
         }
 
-        // Auth0 authenticated - MUST sync token BEFORE allowing navigation
-        console.log('🔐 OwnerGuard: Auth0 authenticated, syncing token...');
+        // Auth0 authenticated - MUST sync token AND verify owner exists BEFORE allowing navigation
+        console.log('🔐 OwnerGuard: Auth0 authenticated, syncing token and loading profile...');
         this.personaService.setPersona('owner');
         
-        // BLOCKING: Wait for token to be synced before allowing navigation
+        // BLOCKING: Wait for token to be synced and owner profile to load
         return this.ownerAuth.syncWithAuth0().pipe(
           map((owner) => {
             if (owner) {
-              console.log('🔐 OwnerGuard: Owner profile synced, access granted');
+              console.log('🔐 OwnerGuard: Owner profile loaded, access granted');
+              return true;
             } else {
-              console.log('🔐 OwnerGuard: Token synced (no profile yet), access granted');
+              // No owner profile exists - redirect to registration
+              console.log('🔐 OwnerGuard: No owner profile found, redirecting to registration');
+              return this.router.createUrlTree(['/owner/register']);
             }
-            return true;
           }),
           catchError((err) => {
-            // Token sync failed but Auth0 is authenticated
-            // Still allow access - profile might not exist yet
-            console.log('🔐 OwnerGuard: Token sync failed, but allowing access:', err?.message);
-            return of(true);
+            // Token sync or profile load failed
+            console.error('🔐 OwnerGuard: Failed to sync/load profile:', err?.message || err);
+            // Redirect to registration - they need to create a profile
+            return of(this.router.createUrlTree(['/owner/register']));
           })
         );
       }),

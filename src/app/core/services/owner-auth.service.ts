@@ -123,15 +123,21 @@ export class OwnerAuthService implements OnDestroy {
 
   /**
    * Sync owner state with Auth0 authentication
+   * Returns the owner profile if it exists, null if no profile exists
    */
   syncWithAuth0(): Observable<OwnerProfile | null> {
+    console.log('🔄 OwnerAuthService: Starting Auth0 sync...');
+    
     return this.auth0.getAccessTokenSilently().pipe(
       switchMap((token) => {
         if (!token) {
+          console.warn('🔄 OwnerAuthService: No token received from Auth0');
           return of(null);
         }
         
-        // Set the Auth0 token
+        console.log('🔄 OwnerAuthService: Token received, length:', token.length);
+        
+        // Set the Auth0 token in state
         this.authState.update((state) => ({
           ...state,
           accessToken: token
@@ -139,36 +145,70 @@ export class OwnerAuthService implements OnDestroy {
 
         // Try to load existing owner profile
         return this.loadProfile().pipe(
-          tap(() => {
+          tap((owner) => {
+            console.log('🔄 OwnerAuthService: Owner profile loaded:', owner?.companyName);
             this.personaService.setPersona('owner');
           }),
-          catchError(() => of(null))
+          catchError((err) => {
+            // Profile doesn't exist or failed to load
+            const status = err?.status;
+            console.log('🔄 OwnerAuthService: Failed to load profile, status:', status, 'error:', err?.error?.message || err?.message);
+            
+            // 400/404 means no profile exists - this is expected for new users
+            if (status === 400 || status === 404) {
+              console.log('🔄 OwnerAuthService: No owner profile exists for this Auth0 user');
+              return of(null);
+            }
+            
+            // 401 means token is invalid - propagate this error
+            if (status === 401) {
+              console.error('🔄 OwnerAuthService: Token was rejected by server (401)');
+              throw err;
+            }
+            
+            // Other errors - return null (treat as no profile)
+            return of(null);
+          })
         );
       }),
-      catchError(() => of(null))
+      catchError((err) => {
+        console.error('🔄 OwnerAuthService: Failed to get token from Auth0:', err?.error || err?.message || err);
+        return of(null);
+      })
     );
+  }
+
+  /**
+   * Create owner profile for already-authenticated Auth0 user
+   * Use this when user is logged in with Auth0 but doesn't have an owner profile yet
+   */
+  createProfile(payload: OwnerRegisterRequest): Observable<OwnerProfile> {
+    console.log('📝 OwnerAuthService: Creating owner profile...');
+    return this.createOwnerProfile(payload);
   }
 
   /**
    * Create owner profile in backend (used after Auth0 auth)
    */
   private createOwnerProfile(payload: OwnerRegisterRequest): Observable<OwnerProfile> {
-    // Map to the backend's expected format (CreateOwnerDto)
-    const isHardcodedCity = payload.cityId && !payload.cityId.includes('-') === false && 
-      ['nyc', 'la', 'chi', 'hou', 'phx', 'phi', 'sa', 'sd', 'dal', 'sj', 'aus', 'jax', 
-       'fw', 'col', 'cha', 'ind', 'sf', 'sea', 'den', 'dc', 'bos', 'mia', 'atl', 'lv', 
-       'det', 'min', 'por', 'nas', 'orl', 'bal'].some(prefix => payload.cityId.startsWith(prefix));
+    // UUID regex pattern - server requires valid UUIDs for cityId
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const isValidUuid = payload.cityId && uuidRegex.test(payload.cityId);
     
+    // Map to the backend's expected format (CreateOwnerDto)
     const createOwnerDto: Record<string, unknown> = {
       companyName: payload.companyName,
       contactEmail: payload.email,
-      contactPhone: payload.phoneNumber || null
+      contactPhone: payload.phoneNumber || null,
+      primaryContactName: payload.primaryContactName || null
     };
     
-    // Only include cityId if it's a valid GUID from the API
-    if (payload.cityId && !isHardcodedCity) {
+    // Only include cityId if it's a valid UUID (server rejects invalid UUIDs with 400)
+    if (isValidUuid) {
       createOwnerDto['cityId'] = payload.cityId;
     }
+
+    console.log('📝 Creating owner with payload:', createOwnerDto);
 
     return this.http
       .post<OwnerProfile>(`${this.baseUrl}/api/Owners`, createOwnerDto)

@@ -5,40 +5,6 @@ import { OwnerAuthService } from '../../../core/services/owner-auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { CityService, City, Country } from '../../../core/services/city.service';
 
-// Hardcoded US Metro Cities for when API doesn't return data
-const US_METRO_CITIES: City[] = [
-  { id: 'nyc-001', name: 'New York City', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'la-002', name: 'Los Angeles', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'chi-003', name: 'Chicago', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'hou-004', name: 'Houston', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'phx-005', name: 'Phoenix', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'phi-006', name: 'Philadelphia', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'sa-007', name: 'San Antonio', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'sd-008', name: 'San Diego', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'dal-009', name: 'Dallas', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'sj-010', name: 'San Jose', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'aus-011', name: 'Austin', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'jax-012', name: 'Jacksonville', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'fw-013', name: 'Fort Worth', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'col-014', name: 'Columbus', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'cha-015', name: 'Charlotte', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'ind-016', name: 'Indianapolis', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'sf-017', name: 'San Francisco', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'sea-018', name: 'Seattle', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'den-019', name: 'Denver', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'dc-020', name: 'Washington D.C.', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'bos-021', name: 'Boston', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'mia-022', name: 'Miami', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'atl-023', name: 'Atlanta', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'lv-024', name: 'Las Vegas', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'det-025', name: 'Detroit', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'min-026', name: 'Minneapolis', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'por-027', name: 'Portland', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'nas-028', name: 'Nashville', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'orl-029', name: 'Orlando', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' },
-  { id: 'bal-030', name: 'Baltimore', countryId: 'usa-001', countryName: 'United States', countryIsoCode: 'USA' }
-];
-
 @Component({
   selector: 'app-owner-register',
   templateUrl: './owner-register.component.html',
@@ -49,6 +15,7 @@ export class OwnerRegisterComponent implements OnInit {
   hidePassword = true;
   hideConfirmPassword = true;
   isLoading = signal(false);
+  isAuth0Authenticated = signal(false);
   
   countries = signal<Country[]>([]);
   cities = signal<City[]>([]);  // Start empty, load from API first
@@ -61,7 +28,7 @@ export class OwnerRegisterComponent implements OnInit {
     password: ['', [Validators.required, Validators.minLength(8)]],
     confirmPassword: ['', [Validators.required]],
     countryId: [''],
-    cityId: ['', Validators.required],
+    cityId: [''],  // Optional - server may not have cities
     phoneNumber: ['']
   }, { validators: this.passwordMatchValidator });
 
@@ -73,9 +40,22 @@ export class OwnerRegisterComponent implements OnInit {
     private readonly toast: ToastService
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.loadCountries();
     this.loadCities();
+    
+    // Check if user is already authenticated with Auth0
+    const isAuth = await this.ownerAuth.isAuth0Authenticated();
+    this.isAuth0Authenticated.set(isAuth);
+    
+    if (isAuth) {
+      // User is already logged in - make password fields optional
+      console.log('📝 User already authenticated with Auth0, password not required');
+      this.registerForm.get('password')?.clearValidators();
+      this.registerForm.get('confirmPassword')?.clearValidators();
+      this.registerForm.get('password')?.updateValueAndValidity();
+      this.registerForm.get('confirmPassword')?.updateValueAndValidity();
+    }
   }
 
   private loadCountries(): void {
@@ -88,18 +68,11 @@ export class OwnerRegisterComponent implements OnInit {
     this.citiesLoading.set(true);
     this.cityService.getCities(countryId).subscribe({
       next: (cities) => {
-        // Use API cities if available, otherwise fallback to hardcoded
-        if (cities && cities.length > 0) {
-          this.cities.set(cities);
-        } else {
-          // Only use hardcoded cities if API returns empty
-          this.cities.set(US_METRO_CITIES);
-        }
+        this.cities.set(cities || []);
         this.citiesLoading.set(false);
       },
       error: () => {
-        // On error, fallback to hardcoded cities
-        this.cities.set(US_METRO_CITIES);
+        this.cities.set([]);
         this.citiesLoading.set(false);
       }
     });
@@ -107,12 +80,7 @@ export class OwnerRegisterComponent implements OnInit {
 
   onCountryChange(countryId: string): void {
     this.registerForm.patchValue({ cityId: '' });
-    if (countryId) {
-      this.loadCities(countryId);
-    } else {
-      // No country selected, show all US metro cities
-      this.cities.set(US_METRO_CITIES);
-    }
+    this.loadCities(countryId || undefined);
   }
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -140,12 +108,34 @@ export class OwnerRegisterComponent implements OnInit {
       companyName: formValue.companyName!,
       primaryContactName: formValue.primaryContactName!,
       email: formValue.email!,
-      password: formValue.password!,
-      confirmPassword: formValue.confirmPassword!,
+      password: formValue.password || '',
+      confirmPassword: formValue.confirmPassword || '',
       cityId: formValue.cityId!,
       phoneNumber: formValue.phoneNumber || undefined
     };
 
+    // If already authenticated with Auth0, create profile directly
+    if (this.isAuth0Authenticated()) {
+      console.log('📝 Creating owner profile for authenticated user...');
+      this.ownerAuth.createProfile(payload).subscribe({
+        next: (owner) => {
+          this.isLoading.set(false);
+          this.toast.success('Registration complete! Welcome aboard.');
+          console.log('📝 Owner profile created:', owner?.companyName);
+          this.router.navigate(['/owner/dashboard']);
+        },
+        error: (err: unknown) => {
+          this.isLoading.set(false);
+          const error = err as { error?: { message?: string }, status?: number };
+          console.error('📝 Failed to create profile:', error);
+          const message = error?.error?.message || 'Registration failed. Please try again.';
+          this.toast.error(message);
+        }
+      });
+      return;
+    }
+
+    // Not authenticated - go through Auth0 signup flow
     try {
       // This will store the registration data and redirect to Auth0
       this.ownerAuth.initiateRegistration(payload);
