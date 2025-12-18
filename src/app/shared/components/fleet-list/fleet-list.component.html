@@ -4,16 +4,6 @@
       <h3>Fleets</h3>
       <p>Manage each fleet and its assigned vehicles.</p>
     </div>
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="create.emit()"
-      *ngIf="showActions"
-      data-testid="create-fleet"
-    >
-      <mat-icon>add</mat-icon>
-      New fleet
-    </button>
   </header>
 
   <div class="fleet-cards" *ngIf="fleets.length; else emptyState">
