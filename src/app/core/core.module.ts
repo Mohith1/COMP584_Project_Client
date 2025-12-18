@@ -31,12 +31,16 @@ console.log('   Client ID:', environment.auth0.clientId ? '✓ SET' : '✗ NOT S
 console.log('   Redirect URI:', getRedirectUri());
 
 // Get audience only if it's a valid Auth0 API identifier
+// The audience MUST match the API Identifier registered in Auth0
 const getAudience = (): string | undefined => {
   const audience: string = environment.auth0.audience || '';
-  if (audience && audience !== 'api://default' && !audience.includes('{your')) {
-    return audience;
+  // Skip invalid/placeholder audiences
+  if (!audience || audience === 'api://default' || audience.includes('{your')) {
+    console.warn('⚠️ Auth0 audience not configured - server will reject tokens with 401!');
+    return undefined;
   }
-  return undefined;
+  console.log('🔧 Auth0 Audience:', audience);
+  return audience;
 };
 
 @NgModule({

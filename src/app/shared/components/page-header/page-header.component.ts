@@ -12,6 +12,7 @@ export class PageHeaderComponent {
   @Input() primaryLabel = '';
   @Input() showPrimary = true;
   @Input() showBack = false;
+  @Input() showIcon = true;
 
   @Output() primary = new EventEmitter<void>();
   @Output() back = new EventEmitter<void>();

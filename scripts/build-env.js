@@ -46,8 +46,14 @@ if (!auth0ClientId) {
   process.exit(1);
 }
 
-// Don't set a default audience - it's optional and causes issues if invalid
+// IMPORTANT: The audience MUST match the API Identifier registered in Auth0 > APIs
+// Without this, the server will return 401 Unauthorized errors
 const auth0Audience = process.env.NG_APP_OKTA_AUDIENCE || process.env.AUTH0_AUDIENCE || '';
+if (!auth0Audience) {
+  console.warn('⚠️ WARNING: NG_APP_OKTA_AUDIENCE is not set!');
+  console.warn('   Without a valid audience, the server will reject all API requests with 401 errors.');
+  console.warn('   Set this to your API identifier in Auth0 (e.g., https://fleetmanagement-api-production.up.railway.app)');
+}
 const redirectUri = process.env.NG_APP_OKTA_REDIRECT_URI || process.env.AUTH0_REDIRECT_URI || 'https://comp-584-project-client-vercel.vercel.app';
 
 // Generate environment.ts content
@@ -70,6 +76,7 @@ try {
   console.log('   API URL:', apiUrl);
   console.log('   Auth0 Domain:', auth0Domain);
   console.log('   Auth0 Client ID:', auth0ClientId);
+  console.log('   Auth0 Audience:', auth0Audience || '⚠️ NOT SET - will cause 401 errors!');
   console.log('   Redirect URI:', redirectUri);
 } catch (error) {
   console.error('❌ Error updating environment file:', error);

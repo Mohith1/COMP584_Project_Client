@@ -20,7 +20,7 @@
     (click)="primary.emit()"
     type="button"
   >
-    <mat-icon>add</mat-icon>
+    <mat-icon *ngIf="showIcon">add</mat-icon>
     {{ primaryLabel }}
   </button>
 </div>

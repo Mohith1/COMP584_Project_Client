@@ -41,23 +41,27 @@ export class OwnerGuard implements CanActivate, CanActivateChild {
           return of(this.router.createUrlTree(['/owner/login']));
         }
 
-        // Auth0 authenticated - allow access to dashboard
-        console.log('🔐 OwnerGuard: Auth0 authenticated, allowing access');
+        // Auth0 authenticated - MUST sync token BEFORE allowing navigation
+        console.log('🔐 OwnerGuard: Auth0 authenticated, syncing token...');
         this.personaService.setPersona('owner');
         
-        // Try to sync owner profile in background (non-blocking)
-        this.ownerAuth.syncWithAuth0().subscribe({
-          next: (owner) => {
+        // BLOCKING: Wait for token to be synced before allowing navigation
+        return this.ownerAuth.syncWithAuth0().pipe(
+          map((owner) => {
             if (owner) {
-              console.log('🔐 OwnerGuard: Owner profile synced');
+              console.log('🔐 OwnerGuard: Owner profile synced, access granted');
+            } else {
+              console.log('🔐 OwnerGuard: Token synced (no profile yet), access granted');
             }
-          },
-          error: (err) => {
-            console.log('🔐 OwnerGuard: No owner profile yet (will create on first action)');
-          }
-        });
-        
-        return of(true);
+            return true;
+          }),
+          catchError((err) => {
+            // Token sync failed but Auth0 is authenticated
+            // Still allow access - profile might not exist yet
+            console.log('🔐 OwnerGuard: Token sync failed, but allowing access:', err?.message);
+            return of(true);
+          })
+        );
       }),
       catchError((err) => {
         console.error('🔐 OwnerGuard: Error checking auth:', err);
