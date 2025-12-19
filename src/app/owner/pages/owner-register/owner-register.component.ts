@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 import { FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { OwnerAuthService } from '../../../core/services/owner-auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { CityService, City, Country } from '../../../core/services/city.service';
@@ -59,8 +60,14 @@ export class OwnerRegisterComponent implements OnInit {
   }
 
   private loadCountries(): void {
-    this.cityService.getCountries().subscribe(countries => {
-      this.countries.set(countries);
+    this.cityService.getCountries().subscribe({
+      next: (countries) => {
+        this.countries.set(countries);
+      },
+      error: () => {
+        // Error already handled in service, just ensure empty array
+        this.countries.set([]);
+      }
     });
   }
 
@@ -126,10 +133,28 @@ export class OwnerRegisterComponent implements OnInit {
         },
         error: (err: unknown) => {
           this.isLoading.set(false);
-          const error = err as { error?: { message?: string }, status?: number };
+          const error = err as HttpErrorResponse | { error?: { message?: string }, status?: number };
           console.error('📝 Failed to create profile:', error);
-          const message = error?.error?.message || 'Registration failed. Please try again.';
+          
+          // Handle CORS/network errors (status 0)
+          if ((error as HttpErrorResponse)?.status === 0 || !(error as HttpErrorResponse)?.status) {
+            const message = 'Unable to connect to server. This may be a CORS configuration issue. Please try again or contact support.';
+            this.toast.error(message);
+            // Don't redirect or logout - keep user on registration page so they can retry
+            return;
+          }
+          
+          // Handle server errors (500, etc.)
+          const status = (error as HttpErrorResponse)?.status || (error as { status?: number })?.status;
+          if (status === 500) {
+            this.toast.error('Server error occurred. Please try again or contact support.');
+            return;
+          }
+          
+          // Handle other errors (400, 401, etc.)
+          const message = (error as { error?: { message?: string } })?.error?.message || 'Registration failed. Please try again.';
           this.toast.error(message);
+          // Don't logout - keep user authenticated with Auth0 so they can retry
         }
       });
       return;

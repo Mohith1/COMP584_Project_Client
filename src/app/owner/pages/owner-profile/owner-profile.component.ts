@@ -29,6 +29,11 @@ export class OwnerProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.ownerAuth.loadProfile().subscribe((profile) => {
+      if (!profile) {
+        // No profile exists yet - leave form empty (user needs to register first)
+        console.log('📝 Profile: No owner profile exists yet');
+        return;
+      }
       this.profileForm.patchValue({
         companyName: profile.companyName,
         contactEmail: profile.contactEmail,

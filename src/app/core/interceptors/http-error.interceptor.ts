@@ -57,6 +57,20 @@ export class HttpErrorInterceptor implements HttpInterceptor {
 
   private presentError(error: HttpErrorResponse) {
     const status = error.status;
+    const url = error.url || '';
+    
+    // Skip error toasts for optional endpoints (Countries/Cities) - these are handled gracefully
+    const isOptionalEndpoint = url.includes('/api/Countries') || url.includes('/api/Cities');
+    if (isOptionalEndpoint && (status === 0 || status >= 400)) {
+      return; // Don't show toast - service handles gracefully with empty arrays
+    }
+    
+    // Handle CORS errors on registration endpoint - show user-friendly message
+    if (status === 0 && url.includes('/api/Owners') && !url.includes('/api/Owners/me')) {
+      this.toast.show('Unable to create profile: Server CORS configuration issue. Please contact support.', 'error');
+      return;
+    }
+    
     const message =
       (error.error && (error.error.message || error.error.title)) ||
       error.message ||

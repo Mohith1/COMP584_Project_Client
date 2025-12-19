@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, computed, signal } from '@angular/core';
-import { Observable, Subscription, of, timer, firstValueFrom } from 'rxjs';
+import { Observable, Subscription, of, timer, firstValueFrom, throwError } from 'rxjs';
 import { tap, map, switchMap, catchError, take } from 'rxjs/operators';
 import { AuthService } from '@auth0/auth0-angular';
 import { environment } from '../../../environments/environment';
@@ -146,27 +146,33 @@ export class OwnerAuthService implements OnDestroy {
         // Try to load existing owner profile
         return this.loadProfile().pipe(
           tap((owner) => {
-            console.log('🔄 OwnerAuthService: Owner profile loaded:', owner?.companyName);
+            if (owner) {
+              console.log('🔄 OwnerAuthService: Owner profile loaded:', owner?.companyName);
+            } else {
+              console.log('🔄 OwnerAuthService: No owner profile exists yet (this is OK - user can create one later)');
+            }
             this.personaService.setPersona('owner');
           }),
           catchError((err) => {
-            // Profile doesn't exist or failed to load
+            // Profile doesn't exist or failed to load - this is OK, don't block
             const status = err?.status;
             console.log('🔄 OwnerAuthService: Failed to load profile, status:', status, 'error:', err?.error?.message || err?.message);
             
-            // 400/404 means no profile exists - this is expected for new users
-            if (status === 400 || status === 404) {
-              console.log('🔄 OwnerAuthService: No owner profile exists for this Auth0 user');
+            // 200 with null/empty response means no profile exists - this is expected for new users
+            // 400/404/500 also mean no profile exists - treat as OK
+            if (status === 200 || status === 400 || status === 404 || status === 500 || status === 0) {
+              console.log('🔄 OwnerAuthService: No owner profile exists for this Auth0 user (status:', status, ')');
               return of(null);
             }
             
-            // 401 means token is invalid - propagate this error
+            // 401 might mean token is invalid, but with AllowAnonymous on server, this shouldn't happen
+            // For now, treat as "no profile exists" to not block navigation
             if (status === 401) {
-              console.error('🔄 OwnerAuthService: Token was rejected by server (401)');
-              throw err;
+              console.warn('🔄 OwnerAuthService: Got 401, but treating as "no profile exists" (server may allow anonymous)');
+              return of(null);
             }
             
-            // Other errors - return null (treat as no profile)
+            // Any other error - return null (treat as no profile, don't block)
             return of(null);
           })
         );
@@ -216,6 +222,12 @@ export class OwnerAuthService implements OnDestroy {
         tap((owner) => {
           this.setOwner(owner);
           this.personaService.setPersona('owner');
+        }),
+        catchError((err) => {
+          // Don't log out user on registration failure - they're still Auth0 authenticated
+          // Just propagate the error so the component can handle it
+          console.error('📝 Failed to create owner profile:', err?.error || err?.message || err);
+          return throwError(() => err);
         })
       );
   }
@@ -262,8 +274,25 @@ export class OwnerAuthService implements OnDestroy {
 
   loadProfile() {
     return this.http
-      .get<OwnerProfile>(`${this.baseUrl}/api/Owners/me`)
-      .pipe(tap((owner) => this.setOwner(owner)));
+      .get<OwnerProfile | null>(`${this.baseUrl}/api/Owners/me`)
+      .pipe(
+        map((owner) => {
+          // Server may return null or empty object for "no profile yet" case
+          if (!owner || !owner.id) {
+            console.log('🔄 OwnerAuthService: Server returned null/empty profile (no profile exists yet)');
+            return null;
+          }
+          return owner;
+        }),
+        tap((owner) => {
+          if (owner) {
+            this.setOwner(owner);
+          } else {
+            // Clear owner state if no profile exists
+            this.setOwner(null);
+          }
+        })
+      );
   }
 
   updateProfile(profile: Partial<OwnerProfile>) {

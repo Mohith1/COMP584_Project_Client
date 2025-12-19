@@ -36,6 +36,8 @@ export class OwnerDashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const ownerId = this.ownerAuth.ownerId();
     if (!ownerId) {
+      // No owner profile yet - that's OK, just show empty dashboard
+      console.log('📊 Dashboard: No owner profile yet, showing empty state');
       return;
     }
 
@@ -43,12 +45,24 @@ export class OwnerDashboardComponent implements OnInit, OnDestroy {
     this.fleetService
       .getFleets(ownerId)
       .pipe(takeUntil(this.destroy$))
-      .subscribe((response) => this.ownerState.setFleets(response.data));
+      .subscribe({
+        next: (response) => this.ownerState.setFleets(response.data),
+        error: (err) => {
+          console.warn('📊 Dashboard: Failed to load fleets:', err);
+          // Continue anyway - show empty state
+        }
+      });
 
     this.telemetryService
       .pollOwnerTelemetry(ownerId, 15000)
       .pipe(takeUntil(this.destroy$))
-      .subscribe((telemetry) => this.ownerState.setTelemetry(telemetry));
+      .subscribe({
+        next: (telemetry) => this.ownerState.setTelemetry(telemetry),
+        error: (err) => {
+          console.warn('📊 Dashboard: Failed to load telemetry:', err);
+          // Continue anyway - show empty state
+        }
+      });
 
     // Start SignalR real-time connection
     this.realtimeService.start(ownerId).catch((error) => {
